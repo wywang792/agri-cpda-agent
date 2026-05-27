@@ -1,0 +1,25 @@
+﻿{
+  "expo": {
+    "name": "鲜达通",
+    "slug": "agent-xfd",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "scheme": "agent-xfd",
+    "splash": {
+      "backgroundColor": "#1a1a1a"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.agentxfd.mobile"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#1a1a1a"
+      },
+      "package": "com.agentxfd.mobile"
+    },
+    "plugins": ["expo-router", "expo-secure-store"]
+  }
+}
