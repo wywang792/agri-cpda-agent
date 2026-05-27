@@ -8,6 +8,31 @@ export async function listProducts(marketId: string, search?: string) {
   return db.select().from(products).where(and(...conditions));
 }
 
+export async function listProductPrices(marketId: string, search?: string) {
+  const baseProducts = await listProducts(marketId, search);
+  const rows = [];
+
+  for (const product of baseProducts) {
+    const [supplierPrice] = await db
+      .select()
+      .from(supplierProducts)
+      .where(eq(supplierProducts.productId, product.id))
+      .limit(1);
+
+    rows.push({
+      id: product.id,
+      name: product.name,
+      category: product.category,
+      unit: product.unit,
+      referencePrice: Number(product.referencePrice),
+      supplierPrice: supplierPrice ? Number(supplierPrice.price) : undefined,
+      stock: supplierPrice?.stock,
+    });
+  }
+
+  return rows;
+}
+
 export async function getProductWithPrice(productId: string, supplierId?: string) {
   const [product] = await db.select().from(products).where(eq(products.id, productId)).limit(1);
   if (!product) return null;
