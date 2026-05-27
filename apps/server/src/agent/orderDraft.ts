@@ -5,6 +5,7 @@ import { products, supplierProducts, users } from '../db/schema.js';
 import { createOrder } from '../modules/order/service.js';
 import type { OrderDraft, OrderDraftItem } from '../modules/chat/types.js';
 import type { AgentState, ExtractedEntities } from './types.js';
+import { normalizeDeliveryTime } from './deliveryTime.js';
 
 type UserRow = typeof users.$inferSelect;
 type ProductRow = typeof products.$inferSelect;
@@ -56,7 +57,14 @@ export function mergeOrderDraft(
   if (entities.supplier) draft.supplierName = entities.supplier;
   if (entities.phone) draft.buyerPhone = entities.phone;
   if (entities.deliveryAddress) draft.deliveryAddress = entities.deliveryAddress;
-  if (entities.timeRange) draft.deliveryTime = entities.timeRange;
+  if (entities.timeRange) {
+    const deliveryTime = normalizeDeliveryTime(entities.timeRange);
+    if (deliveryTime) {
+      draft.deliveryTimeText = deliveryTime.text;
+      draft.deliveryStartAt = deliveryTime.startAt;
+      draft.deliveryEndAt = deliveryTime.endAt;
+    }
+  }
 
   return draft;
 }
@@ -217,7 +225,9 @@ function normalizeCreatedOrder(order: Awaited<ReturnType<typeof createOrder>>): 
     ...order,
     totalPrice: Number(order.totalPrice),
     deliveryAddress: order.deliveryAddress || '',
-    deliveryTime: order.deliveryTime || undefined,
+    deliveryTimeText: order.deliveryTimeText || undefined,
+    deliveryStartAt: order.deliveryStartAt || undefined,
+    deliveryEndAt: order.deliveryEndAt || undefined,
     remark: order.remark || undefined,
     items: order.items.map((item) => ({
       ...item,
@@ -246,7 +256,9 @@ export async function applyOrderFlow(state: AgentState): Promise<Partial<AgentSt
       buyerId: orderDraft.buyerId!,
       supplierId: orderDraft.supplierId!,
       deliveryAddress: orderDraft.deliveryAddress!,
-      deliveryTime: orderDraft.deliveryTime,
+      deliveryTimeText: orderDraft.deliveryTimeText,
+      deliveryStartAt: orderDraft.deliveryStartAt,
+      deliveryEndAt: orderDraft.deliveryEndAt,
       items: orderDraft.items.map((item) => ({
         productId: item.productId!,
         quantity: item.quantity,

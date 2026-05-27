@@ -15,7 +15,9 @@ export interface OrderDraft {
   supplierId?: string;
   supplierName?: string;
   deliveryAddress?: string;
-  deliveryTime?: string;
+  deliveryTimeText?: string;
+  deliveryStartAt?: Date;
+  deliveryEndAt?: Date;
   remark?: string;
   items: OrderDraftItem[];
   totalPrice?: number;

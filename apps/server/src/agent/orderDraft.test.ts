@@ -26,7 +26,8 @@ describe('order draft helpers', () => {
     expect(draft.buyerName).toBe('小王');
     expect(draft.buyerPhone).toBe('18089333333');
     expect(draft.deliveryAddress).toBe('西安市钟楼');
-    expect(draft.deliveryTime).toBe('明天中午12点');
+    expect(draft.deliveryTimeText).toBe('明天中午12点');
+    expect(draft.deliveryStartAt).toBeInstanceOf(Date);
   });
 
   it('reports only the remaining missing fields', () => {

@@ -27,6 +27,15 @@ function formatCreatedAt(value: string) {
   return `${date.getMonth() + 1}-${date.getDate()} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
 }
 
+function formatDeliveryTime(order: OrderDto) {
+  if (order.deliveryTimeText) return order.deliveryTimeText;
+  if (!order.deliveryStartAt) return '-';
+
+  const start = formatCreatedAt(order.deliveryStartAt);
+  if (!order.deliveryEndAt) return start;
+  return `${start} - ${formatCreatedAt(order.deliveryEndAt)}`;
+}
+
 export default function OrdersScreen() {
   const [active, setActive] = useState('全部');
   const [orders, setOrders] = useState<OrderDto[]>([]);
@@ -92,7 +101,7 @@ export default function OrdersScreen() {
               </View>
               <Text style={styles.items}>{itemSummary || '暂无商品明细'}</Text>
               <View style={styles.timeRow}>
-                <Text style={styles.timeText}>配送：{item.deliveryTime || '-'}</Text>
+                <Text style={styles.timeText}>配送：{formatDeliveryTime(item)}</Text>
                 <Text style={styles.timeText}>创建：{formatCreatedAt(item.createdAt)}</Text>
               </View>
               <View style={styles.cardFooter}>

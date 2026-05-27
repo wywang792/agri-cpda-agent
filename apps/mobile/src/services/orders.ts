@@ -15,7 +15,9 @@ export interface OrderDto {
   supplierName: string;
   totalPrice: string;
   status: string;
-  deliveryTime?: string | null;
+  deliveryTimeText?: string | null;
+  deliveryStartAt?: string | null;
+  deliveryEndAt?: string | null;
   createdAt: string;
   items: OrderItemDto[];
 }
