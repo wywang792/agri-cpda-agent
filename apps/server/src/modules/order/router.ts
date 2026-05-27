@@ -1,11 +1,11 @@
 ﻿import { Hono } from 'hono';
 import { authMiddleware } from '../../middleware/auth.js';
-import { createOrder, getOrders, getOrderDetail, updateOrderStatus } from './service.js';
-import type { OrderStatus } from '@agent-xfd/shared';
+import { createOrder, getOrdersForUser, getOrderDetail, updateOrderStatus } from './service.js';
+import type { OrderStatus, UserRole } from '@agent-xfd/shared';
 
 type AuthVariables = {
   userId: string;
-  userRole: 'buyer' | 'supplier';
+  userRole: UserRole;
 };
 
 const orderStatuses: OrderStatus[] = [
@@ -30,6 +30,9 @@ orderRouter.post('/', async (c) => {
     const body = await c.req.json();
     const userId = c.get('userId');
     const userRole = c.get('userRole');
+    if (userRole === 'admin') {
+      return c.json({ error: 'Admin cannot create orders' }, 403);
+    }
     return c.json(await createOrder(body, userId, userRole), 201);
   } catch (e: any) {
     return c.json({ error: e.message }, 400);
@@ -38,8 +41,9 @@ orderRouter.post('/', async (c) => {
 
 orderRouter.get('/', async (c) => {
   const userId = c.get('userId');
+  const userRole = c.get('userRole');
   const status = c.req.query('status');
-  return c.json(await getOrders(userId, isOrderStatus(status) ? { status } : undefined));
+  return c.json(await getOrdersForUser(userId, userRole, isOrderStatus(status) ? { status } : undefined));
 });
 
 orderRouter.get('/:id', async (c) => {

@@ -1,7 +1,7 @@
 ﻿import { db } from '../../db/index.js';
 import { orders, orderItems, users, products, supplierProducts } from '../../db/schema.js';
-import { eq, and, desc } from 'drizzle-orm';
-import type { CreateOrderRequest, OrderStatus } from '@agent-xfd/shared';
+import { eq, and, desc, or } from 'drizzle-orm';
+import type { CreateOrderRequest, OrderStatus, UserRole } from '@agent-xfd/shared';
 
 function generateOrderNo(): string {
   const now = new Date();
@@ -55,6 +55,34 @@ export async function getOrders(userId: string, filters?: { status?: OrderStatus
   const conditions = [eq(orders.buyerId, userId)];
   if (filters?.status) conditions.push(eq(orders.status, filters.status));
   return db.select().from(orders).where(and(...conditions)).orderBy(desc(orders.createdAt));
+}
+
+export async function getOrdersForUser(userId: string, role: UserRole, filters?: { status?: OrderStatus }) {
+  const conditions = [];
+
+  if (role === 'buyer') {
+    conditions.push(eq(orders.buyerId, userId));
+  } else if (role === 'supplier') {
+    conditions.push(eq(orders.supplierId, userId));
+  } else {
+    conditions.push(or(eq(orders.buyerId, userId), eq(orders.supplierId, userId))!);
+  }
+
+  if (filters?.status) conditions.push(eq(orders.status, filters.status));
+
+  const rows = await db
+    .select()
+    .from(orders)
+    .where(and(...conditions))
+    .orderBy(desc(orders.createdAt));
+
+  const result = [];
+  for (const order of rows) {
+    const items = await db.select().from(orderItems).where(eq(orderItems.orderId, order.id));
+    result.push({ ...order, items });
+  }
+
+  return result;
 }
 
 export async function getOrderDetail(orderId: string) {
