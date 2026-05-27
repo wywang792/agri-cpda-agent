@@ -217,6 +217,7 @@ function normalizeCreatedOrder(order: Awaited<ReturnType<typeof createOrder>>): 
     ...order,
     totalPrice: Number(order.totalPrice),
     deliveryAddress: order.deliveryAddress || '',
+    deliveryTime: order.deliveryTime || undefined,
     remark: order.remark || undefined,
     items: order.items.map((item) => ({
       ...item,
@@ -245,7 +246,7 @@ export async function applyOrderFlow(state: AgentState): Promise<Partial<AgentSt
       buyerId: orderDraft.buyerId!,
       supplierId: orderDraft.supplierId!,
       deliveryAddress: orderDraft.deliveryAddress!,
-      remark: orderDraft.deliveryTime ? `期望配送时间：${orderDraft.deliveryTime}` : undefined,
+      deliveryTime: orderDraft.deliveryTime,
       items: orderDraft.items.map((item) => ({
         productId: item.productId!,
         quantity: item.quantity,

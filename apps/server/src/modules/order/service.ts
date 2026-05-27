@@ -43,7 +43,7 @@ export async function createOrder(data: CreateOrderRequest, creatorId: string, c
     buyerId: data.buyerId, buyerName: buyer.username,
     supplierId: data.supplierId, supplierName: supplier.username,
     totalPrice: totalPrice.toFixed(2), status: 'pending',
-    deliveryAddress: data.deliveryAddress, remark: data.remark,
+    deliveryAddress: data.deliveryAddress, deliveryTime: data.deliveryTime, remark: data.remark,
     marketId: buyer.marketId,
   }).returning();
 

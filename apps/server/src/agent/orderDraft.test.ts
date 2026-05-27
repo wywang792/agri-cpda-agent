@@ -51,6 +51,17 @@ describe('fallback extraction rules', () => {
     expect(entities.timeRange).toBe('明天中午12点');
   });
 
+  it('extracts multiple products from a single natural language order', () => {
+    const entities = extractEntitiesByRules('帮我下单10斤土豆和10斤西红柿，明天上午送到西安市钟楼');
+
+    expect(entities.items).toEqual([
+      { name: '土豆', quantity: 10, unit: '斤' },
+      { name: '西红柿', quantity: 10, unit: '斤' },
+    ]);
+    expect(entities.deliveryAddress).toBe('西安市钟楼');
+    expect(entities.timeRange).toBe('明天上午');
+  });
+
   it('keeps today as a query time range', () => {
     expect(recognizeIntentByRules('查询供应商今天的订单')).toBe('query_order');
     expect(extractEntitiesByRules('查询供应商今天的订单').timeRange).toBe('今天');

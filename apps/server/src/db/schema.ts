@@ -63,6 +63,7 @@ export const orders = pgTable('orders', {
   totalPrice: decimal('total_price', { precision: 12, scale: 2 }).notNull(),
   status: orderStatusEnum('status').notNull().default('pending'),
   deliveryAddress: text('delivery_address'),
+  deliveryTime: text('delivery_time'),
   remark: text('remark'),
   marketId: uuid('market_id').references(() => markets.id).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),

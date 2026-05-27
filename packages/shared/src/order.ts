@@ -31,6 +31,7 @@ export interface Order {
   totalPrice: number;
   status: OrderStatus;
   deliveryAddress: string;
+  deliveryTime?: string;
   remark?: string;
   marketId: string;
   createdAt: Date;
@@ -45,5 +46,6 @@ export interface CreateOrderRequest {
     quantity: number;
   }[];
   deliveryAddress: string;
+  deliveryTime?: string;
   remark?: string;
 }

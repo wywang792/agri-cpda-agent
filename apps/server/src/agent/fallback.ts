@@ -25,7 +25,7 @@ export function recognizeIntentByRules(message: string, history: HistoryEntry[] 
   if (/取消|撤销|不要了/.test(message)) return 'cancel';
   if (/推荐|买什么|买点啥|什么好/.test(message)) return 'recommend';
   if (/多少钱|价格|价钱|报价/.test(message)) return 'ask_price';
-  if (/订单|送到|状态|昨天|今天|历史/.test(message) && /查|看|到没|有没有/.test(message)) return 'query_order';
+  if (/订单|送到|状态|昨天|今天|历史/.test(message) && /查|看|到没|有没有|查询/.test(message)) return 'query_order';
   if (/下单|采购|购买|来\s*[一二两三四五六七八九十百千万\d]+|要\s*[一二两三四五六七八九十百千万\d]+|送\s*[一二两三四五六七八九十百千万\d]+|[一二两三四五六七八九十百千万\d]+\s*(斤|箱|袋)/.test(message)) return 'place_order';
   if (hasActiveOrderContext(history) && /电话|地址|送|明天|今天|中午|下午|上午|\d{11}/.test(message)) return 'place_order';
   return 'chat';
@@ -65,41 +65,63 @@ function parseChineseNumber(value: string): number {
   return total + section + current;
 }
 
+function cleanProductName(value: string): string {
+  return value
+    .replace(/^(帮我|我要|我想|请|下单|采购|购买|买|来|要|送|订|点)+/, '')
+    .replace(/[，。,.、\s]+$/g, '')
+    .replace(/和$/g, '')
+    .trim();
+}
+
 function findItems(text: string): ExtractedEntities['items'] {
   const items: ExtractedEntities['items'] = [];
   const seen = new Set<string>();
-  const quantity = '([一二两三四五六七八九十百千万\\d]+(?:\\.\\d+)?)';
-  const unit = '(斤|箱|袋|个|件)';
-  const name = '([\\u4e00-\\u9fa5A-Za-z]{1,12})';
-  const patterns = [
-    { regex: new RegExp(`${name}\\s*${quantity}\\s*${unit}`, 'g'), nameFirst: true },
-    { regex: new RegExp(`${quantity}\\s*${unit}\\s*${name}`, 'g'), nameFirst: false },
-  ];
+  const itemPattern = /([一二两三四五六七八九十百千万\d]+(?:\.\d+)?)\s*(斤|箱|袋|个|件)\s*([^一二两三四五六七八九十百千万\d，。,.、\s]+)/g;
 
-  for (const pattern of patterns) {
-    for (const match of text.matchAll(pattern.regex)) {
-      const productName = (pattern.nameFirst ? match[1] : match[3]).replace(/^(送|来|要|买|采购|下单)/, '');
-      const quantityText = pattern.nameFirst ? match[2] : match[1];
-      const unitText = (pattern.nameFirst ? match[3] : match[2]) || '斤';
-      const parsedQuantity = parseChineseNumber(quantityText);
-      const key = `${productName}:${parsedQuantity}:${unitText}`;
+  for (const match of text.matchAll(itemPattern)) {
+    const quantity = parseChineseNumber(match[1]);
+    const unit = match[2] || '斤';
+    const name = cleanProductName(match[3]);
+    const key = `${name}:${quantity}:${unit}`;
 
-      if (
-        !productName ||
-        /^(用户|助手|下单|订单|商品明细|确认)$/.test(productName) ||
-        productName.length > 12 ||
-        parsedQuantity <= 0 ||
-        seen.has(key)
-      ) {
-        continue;
-      }
-
-      seen.add(key);
-      items.push({ name: productName, quantity: parsedQuantity, unit: unitText });
+    if (
+      !name ||
+      /^(用户|助手|下单|订单|商品明细|确认)$/.test(name) ||
+      name.length > 12 ||
+      quantity <= 0 ||
+      seen.has(key)
+    ) {
+      continue;
     }
+
+    seen.add(key);
+    items.push({ name, quantity, unit });
   }
 
   return items;
+}
+
+function extractTimeRange(text: string): string | null {
+  const preciseTime = text.match(/(?:今天|明天|后天)?\s*(?:上午|中午|下午|晚上)\s*\d{1,2}\s*点/);
+  if (preciseTime?.[0]) return preciseTime[0].replace(/\s+/g, '');
+
+  const partOfDay = text.match(/(?:今天|明天|后天)\s*(?:上午|中午|下午|晚上)?/);
+  if (partOfDay?.[0]) return partOfDay[0].replace(/\s+/g, '');
+
+  if (/昨天/.test(text)) return '昨天';
+  if (/今天/.test(text)) return '今天';
+  return null;
+}
+
+function cleanDeliveryAddress(value: string | undefined): string | null {
+  if (!value) return null;
+
+  const address = value
+    .replace(/^(今天|明天|后天)?(上午|中午|下午|晚上)?(\d{1,2}点)?/, '')
+    .replace(/^(送到|配送到|收货地址|地址)[:：\s]*/, '')
+    .trim();
+
+  return address || null;
 }
 
 export function extractEntitiesByRules(message: string, history: HistoryEntry[] = []): ExtractedEntities {
@@ -107,7 +129,6 @@ export function extractEntitiesByRules(message: string, history: HistoryEntry[] 
   const items = findItems(text);
 
   const phoneMatch = text.match(/1[3-9]\d{9}/);
-  const timeMatch = text.match(/(今天|明天|后天)?\s*(上午|中午|下午|晚上)?\s*\d{1,2}\s*点/);
   const addressMatch = text.match(/(?:地址|送到|配送到|收货地址)?[:：\s]*([\u4e00-\u9fa5A-Za-z0-9]{2,}(?:市|区|县|路|街|楼|号|仓|市场|店|摊)[\u4e00-\u9fa5A-Za-z0-9]*)/);
   const buyerMatch = text.match(/(?:我是|联系人|客户|采购商)?\s*([\u4e00-\u9fa5]{2,4})\s*(?:1[3-9]\d{9})/);
 
@@ -115,8 +136,8 @@ export function extractEntitiesByRules(message: string, history: HistoryEntry[] 
     items,
     buyer: buyerMatch?.[1] || null,
     supplier: null,
-    deliveryAddress: addressMatch?.[1] || null,
-    timeRange: timeMatch?.[0]?.replace(/\s+/g, '') || (/昨天/.test(text) ? '昨天' : /今天/.test(text) ? '今天' : null),
+    deliveryAddress: cleanDeliveryAddress(addressMatch?.[1]),
+    timeRange: extractTimeRange(text),
     phone: phoneMatch?.[0] || null,
   };
 }
