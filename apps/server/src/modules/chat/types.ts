@@ -2,20 +2,20 @@ import type { AgentIntent, Order } from '@agent-xfd/shared';
 
 export interface OrderDraftItem {
   productId?: string;
-  productName?: string;
-  name: string;
+  productName: string;
   quantity: number;
   unit: string;
   unitPrice?: number;
-  subtotal?: number;
 }
 
 export interface OrderDraft {
   buyerId?: string;
   buyerName?: string;
+  buyerPhone?: string;
   supplierId?: string;
   supplierName?: string;
   deliveryAddress?: string;
+  deliveryTime?: string;
   remark?: string;
   items: OrderDraftItem[];
   totalPrice?: number;

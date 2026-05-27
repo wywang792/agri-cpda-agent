@@ -88,7 +88,7 @@ export async function getOrCreateCurrentConversation(userId: string): Promise<Cu
 export async function getConversationForUser(
   conversationId: string,
   userId: string,
-): Promise<CurrentConversationResponse | null> {
+): Promise<CurrentConversationResponse> {
   const [conversation] = await db
     .select()
     .from(conversations)
@@ -96,7 +96,7 @@ export async function getConversationForUser(
     .limit(1);
 
   if (!conversation || conversation.userId !== userId) {
-    return null;
+    throw new Error('Conversation not found');
   }
 
   return toCurrentConversationResponse(conversation);
@@ -136,6 +136,7 @@ export function toAgentHistory(messages: ConversationMessage[]): Array<{ role: '
     .filter((message): message is ConversationMessage & { role: 'user' | 'assistant' } => (
       message.role === 'user' || message.role === 'assistant'
     ))
+    .slice(-12)
     .map((message) => ({
       role: message.role,
       content: message.content,
