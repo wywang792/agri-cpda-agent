@@ -1,6 +1,6 @@
 ﻿import {
   pgTable, uuid, varchar, text, integer, decimal,
-  timestamp, jsonb, pgEnum, index,
+  timestamp, jsonb, pgEnum, index, boolean,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
@@ -87,6 +87,19 @@ export const orderItems = pgTable('order_items', {
   unitPrice: decimal('unit_price', { precision: 10, scale: 2 }).notNull(),
   subtotal: decimal('subtotal', { precision: 12, scale: 2 }).notNull(),
 });
+
+export const buyerAddresses = pgTable('buyer_addresses', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id').references(() => users.id).notNull(),
+  contactName: varchar('contact_name', { length: 255 }).notNull(),
+  contactPhone: varchar('contact_phone', { length: 50 }).notNull(),
+  address: text('address').notNull(),
+  isDefault: boolean('is_default').notNull().default(false),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  userIdx: index('buyer_addresses_user_idx').on(table.userId),
+}));
 
 export const conversations = pgTable('conversations', {
   id: uuid('id').defaultRandom().primaryKey(),
