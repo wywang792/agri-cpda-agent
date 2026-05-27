@@ -1,4 +1,4 @@
-import { desc, eq } from 'drizzle-orm';
+import { and, desc, eq, sql } from 'drizzle-orm';
 import { db } from '../../db/index.js';
 import { conversations } from '../../db/schema.js';
 import type { ConversationMessage, CurrentConversationResponse, OrderDraft } from './types.js';
@@ -50,6 +50,10 @@ function normalizeMessages(value: unknown): ConversationMessage[] {
   return value
     .map((message) => normalizeMessage(message))
     .filter((message): message is ConversationMessage => message !== null);
+}
+
+function isOrderDraft(value: unknown): value is OrderDraft {
+  return Boolean(value && typeof value === 'object' && Array.isArray((value as OrderDraft).items));
 }
 
 function toCurrentConversationResponse(row: ConversationRow): CurrentConversationResponse {
@@ -104,29 +108,26 @@ export async function getConversationForUser(
 
 export async function appendConversationMessage(
   conversationId: string,
+  userId: string,
   message: ConversationMessage,
-): Promise<CurrentConversationResponse | null> {
-  const [conversation] = await db
-    .select()
-    .from(conversations)
-    .where(eq(conversations.id, conversationId))
-    .limit(1);
-
-  if (!conversation) {
-    return null;
-  }
-
+): Promise<CurrentConversationResponse> {
   const normalizedMessage = normalizeMessage(message);
   if (!normalizedMessage) {
     throw new Error('Invalid conversation message');
   }
 
-  const messages = [...normalizeMessages(conversation.messages), normalizedMessage];
   const [updatedConversation] = await db
     .update(conversations)
-    .set({ messages, updatedAt: new Date() })
-    .where(eq(conversations.id, conversationId))
+    .set({
+      messages: sql`${conversations.messages} || ${JSON.stringify([normalizedMessage])}::jsonb`,
+      updatedAt: sql`now()`,
+    })
+    .where(and(eq(conversations.id, conversationId), eq(conversations.userId, userId)))
     .returning();
+
+  if (!updatedConversation) {
+    throw new Error('Conversation not found');
+  }
 
   return toCurrentConversationResponse(updatedConversation);
 }
@@ -148,7 +149,7 @@ export function getLatestOrderDraft(messages: ConversationMessage[]): OrderDraft
 
   for (let index = normalizedMessages.length - 1; index >= 0; index -= 1) {
     const orderDraft = normalizedMessages[index]?.metadata?.orderDraft;
-    if (orderDraft) {
+    if (isOrderDraft(orderDraft)) {
       return orderDraft;
     }
   }
