@@ -5,6 +5,7 @@
   baseUrl: string;
   temperature: number;
   maxTokens: number;
+  timeoutMs: number;
 }
 
 export function getLLMConfig(): LLMConfig {
@@ -17,6 +18,7 @@ export function getLLMConfig(): LLMConfig {
       baseUrl: process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com',
       temperature: Number(process.env.LLM_TEMPERATURE) || 0.3,
       maxTokens: Number(process.env.LLM_MAX_TOKENS) || 2048,
+      timeoutMs: Number(process.env.LLM_TIMEOUT_MS) || 15000,
     };
   }
   return {
@@ -26,5 +28,6 @@ export function getLLMConfig(): LLMConfig {
     baseUrl: process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1',
     temperature: Number(process.env.LLM_TEMPERATURE) || 0.3,
     maxTokens: Number(process.env.LLM_MAX_TOKENS) || 2048,
+    timeoutMs: Number(process.env.LLM_TIMEOUT_MS) || 15000,
   };
 }

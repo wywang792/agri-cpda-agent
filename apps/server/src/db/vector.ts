@@ -30,5 +30,10 @@ export async function searchProductsByVector(
     ORDER BY embedding <=> ${embeddingStr}::vector
     LIMIT ${limit}
   `);
-  return results as Array<{ id: string; name: string; category: string; similarity: number }>;
+  return results.map((row) => ({
+    id: String(row.id),
+    name: String(row.name),
+    category: String(row.category),
+    similarity: Number(row.similarity),
+  }));
 }

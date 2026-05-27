@@ -1,8 +1,28 @@
 ﻿import { Hono } from 'hono';
 import { authMiddleware } from '../../middleware/auth.js';
 import { createOrder, getOrders, getOrderDetail, updateOrderStatus } from './service.js';
+import type { OrderStatus } from '@agent-xfd/shared';
 
-export const orderRouter = new Hono();
+type AuthVariables = {
+  userId: string;
+  userRole: 'buyer' | 'supplier';
+};
+
+const orderStatuses: OrderStatus[] = [
+  'pending',
+  'confirmed',
+  'sorting',
+  'sorted',
+  'delivering',
+  'completed',
+  'cancelled',
+];
+
+function isOrderStatus(value: string | undefined): value is OrderStatus {
+  return value !== undefined && orderStatuses.includes(value as OrderStatus);
+}
+
+export const orderRouter = new Hono<{ Variables: AuthVariables }>();
 orderRouter.use('*', authMiddleware);
 
 orderRouter.post('/', async (c) => {
@@ -19,7 +39,7 @@ orderRouter.post('/', async (c) => {
 orderRouter.get('/', async (c) => {
   const userId = c.get('userId');
   const status = c.req.query('status');
-  return c.json(await getOrders(userId, status ? { status } : undefined));
+  return c.json(await getOrders(userId, isOrderStatus(status) ? { status } : undefined));
 });
 
 orderRouter.get('/:id', async (c) => {

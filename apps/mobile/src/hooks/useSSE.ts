@@ -1,7 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import * as SecureStore from 'expo-secure-store';
-
-const API_BASE = process.env.EXPO_PUBLIC_API_URL || 'http://10.0.2.2:3000';
+import { API_BASE } from '../services/config';
 
 interface SSEOptions {
   onText?: (content: string) => void;
@@ -11,60 +10,120 @@ interface SSEOptions {
   onError?: (error: string) => void;
 }
 
+function createSSEParser(options: SSEOptions) {
+  let buffer = '';
+  let currentEvent = '';
+
+  function dispatch(event: string, rawData: string) {
+    try {
+      const parsed = JSON.parse(rawData);
+      const data = typeof parsed === 'string' ? JSON.parse(parsed) : parsed;
+
+      if (event === 'text') options.onText?.(data.content);
+      else if (event === 'order_preview') options.onOrderPreview?.(data);
+      else if (event === 'suggestions') options.onSuggestions?.(data);
+      else if (event === 'done') options.onDone?.(data);
+      else if (event === 'error') options.onError?.(data.error || '服务端处理失败');
+    } catch (error: any) {
+      options.onError?.(`SSE 解析失败：${error.message}`);
+    }
+  }
+
+  return {
+    push(chunk: string) {
+      buffer += chunk;
+      const lines = buffer.split(/\r?\n/);
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        const normalized = line.trimEnd();
+        if (normalized === '') {
+          currentEvent = '';
+        } else if (normalized.startsWith('event:')) {
+          currentEvent = normalized.slice(6).trim();
+        } else if (normalized.startsWith('data:')) {
+          dispatch(currentEvent, normalized.slice(5).trim());
+        }
+      }
+    },
+    flush() {
+      if (buffer) this.push('\n');
+    },
+  };
+}
+
+function startSSERequest(url: string, token: string, message: string, options: SSEOptions) {
+  const xhr = new XMLHttpRequest();
+  const parser = createSSEParser(options);
+  let readOffset = 0;
+
+  const readNewText = () => {
+    const text = xhr.responseText || '';
+    if (text.length <= readOffset) return;
+    parser.push(text.slice(readOffset));
+    readOffset = text.length;
+  };
+
+  const done = new Promise<void>((resolve, reject) => {
+    xhr.onprogress = readNewText;
+    xhr.onload = () => {
+      readNewText();
+      parser.flush();
+      console.log(`[SSE] Response status ${xhr.status}`);
+
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve();
+        return;
+      }
+
+      try {
+        const error = JSON.parse(xhr.responseText);
+        reject(new Error(error.error || `HTTP ${xhr.status}`));
+      } catch {
+        reject(new Error(`HTTP ${xhr.status}`));
+      }
+    };
+    xhr.onerror = () => reject(new Error('网络请求失败'));
+    xhr.ontimeout = () => reject(new Error(`请求超时：无法连接 ${API_BASE}`));
+    xhr.onabort = () => reject(new Error('请求已取消'));
+  });
+
+  xhr.open('POST', url);
+  xhr.setRequestHeader('Accept', 'text/event-stream');
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+  xhr.timeout = 30000;
+  xhr.send(JSON.stringify({ message }));
+
+  return { xhr, done };
+}
+
 export function useSSE() {
   const [isStreaming, setIsStreaming] = useState(false);
-  const abortRef = useRef<AbortController | null>(null);
+  const xhrRef = useRef<XMLHttpRequest | null>(null);
 
   const send = useCallback(async (message: string, options: SSEOptions) => {
     const token = await SecureStore.getItemAsync('auth_token');
     if (!token) throw new Error('Not authenticated');
 
     setIsStreaming(true);
-    abortRef.current = new AbortController();
 
     try {
-      const response = await fetch(`${API_BASE}/api/chat/stream`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ message }),
-        signal: abortRef.current.signal,
-      });
-
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const reader = response.body?.getReader();
-      if (!reader) throw new Error('No response body');
-
-      const decoder = new TextDecoder();
-      let buffer = '';
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
-
-        let currentEvent = '';
-        for (const line of lines) {
-          if (line.startsWith('event:')) currentEvent = line.slice(6).trim();
-          else if (line.startsWith('data:')) {
-            try {
-              const parsed = JSON.parse(line.slice(5).trim());
-              const inner = typeof parsed === 'string' ? JSON.parse(parsed) : parsed;
-              if (currentEvent === 'text') options.onText?.(inner.content);
-              else if (currentEvent === 'order_preview') options.onOrderPreview?.(inner);
-              else if (currentEvent === 'suggestions') options.onSuggestions?.(inner);
-              else if (currentEvent === 'done') options.onDone?.(inner);
-              else if (currentEvent === 'error') options.onError?.(inner.error);
-            } catch {}
-          }
-        }
-      }
+      const url = `${API_BASE}/api/chat/stream`;
+      console.log(`[SSE] POST ${url}`);
+      const request = startSSERequest(url, token, message, options);
+      xhrRef.current = request.xhr;
+      await request.done;
     } finally {
       setIsStreaming(false);
+      xhrRef.current = null;
     }
   }, []);
 
-  const cancel = useCallback(() => { abortRef.current?.abort(); setIsStreaming(false); }, []);
+  const cancel = useCallback(() => {
+    xhrRef.current?.abort();
+    setIsStreaming(false);
+  }, []);
+
   return { send, cancel, isStreaming };
 }

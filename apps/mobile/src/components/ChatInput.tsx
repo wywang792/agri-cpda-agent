@@ -1,16 +1,29 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { View, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-export function ChatInput({ onSend, onVoice, disabled }: { onSend: (msg: string) => void; onVoice?: () => void; disabled?: boolean }) {
+export function ChatInput({
+  onSend,
+  onVoice,
+  disabled,
+}: {
+  onSend: (msg: string) => void | Promise<void>;
+  onVoice?: () => void;
+  disabled?: boolean;
+}) {
   const [text, setText] = useState('');
+  const submittingRef = useRef(false);
   const hasText = text.trim().length > 0;
 
   const handleSend = () => {
-    if (text.trim() && !disabled) {
-      onSend(text.trim());
-      setText('');
-    }
+    const message = text.trim();
+    if (!message || disabled || submittingRef.current) return;
+
+    submittingRef.current = true;
+    setText('');
+    Promise.resolve(onSend(message)).finally(() => {
+      submittingRef.current = false;
+    });
   };
 
   return (
@@ -23,7 +36,10 @@ export function ChatInput({ onSend, onVoice, disabled }: { onSend: (msg: string)
         placeholderTextColor="#bbb"
         editable={!disabled}
         onSubmitEditing={handleSend}
+        autoCapitalize="none"
+        autoCorrect={false}
         returnKeyType="send"
+        submitBehavior="submit"
       />
       {hasText ? (
         <TouchableOpacity style={styles.sendBtn} onPress={handleSend} disabled={disabled}>

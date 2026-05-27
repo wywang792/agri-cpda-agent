@@ -6,7 +6,12 @@ import { db } from '../../db/index.js';
 import { users } from '../../db/schema.js';
 import { eq } from 'drizzle-orm';
 
-export const chatRouter = new Hono();
+type AuthVariables = {
+  userId: string;
+  userRole: 'buyer' | 'supplier';
+};
+
+export const chatRouter = new Hono<{ Variables: AuthVariables }>();
 chatRouter.use('*', authMiddleware);
 
 const agentGraph = buildAgentGraph();

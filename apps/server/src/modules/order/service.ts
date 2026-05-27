@@ -28,14 +28,21 @@ export async function createOrder(data: CreateOrderRequest, creatorId: string, c
     const unitPrice = sp ? Number(sp.price) : Number(product.referencePrice);
     const subtotal = unitPrice * item.quantity;
     totalPrice += subtotal;
-    items.push({ productId: item.productId, productName: product.name, quantity: item.quantity, unit: product.unit, unitPrice, subtotal });
+    items.push({
+      productId: item.productId,
+      productName: product.name,
+      quantity: item.quantity,
+      unit: product.unit,
+      unitPrice: unitPrice.toFixed(2),
+      subtotal: subtotal.toFixed(2),
+    });
   }
 
   const [order] = await db.insert(orders).values({
     orderNo: generateOrderNo(), creatorId, creatorRole,
     buyerId: data.buyerId, buyerName: buyer.username,
     supplierId: data.supplierId, supplierName: supplier.username,
-    totalPrice, status: 'pending',
+    totalPrice: totalPrice.toFixed(2), status: 'pending',
     deliveryAddress: data.deliveryAddress, remark: data.remark,
     marketId: buyer.marketId,
   }).returning();

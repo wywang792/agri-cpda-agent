@@ -19,17 +19,27 @@ export function useChat() {
     setStreamingText('');
 
     let fullResponse = '';
-    await send(content, {
-      onText: (chunk) => { fullResponse += chunk; setStreamingText(fullResponse); },
-      onDone: (data) => {
-        setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), role: 'assistant', content: data.fullResponse, timestamp: new Date() }]);
-        setStreamingText('');
-      },
-      onError: (error) => {
-        setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), role: 'assistant', content: `错误：${error}`, timestamp: new Date() }]);
-        setStreamingText('');
-      },
-    });
+    try {
+      await send(content, {
+        onText: (chunk) => { fullResponse += chunk; setStreamingText(fullResponse); },
+        onDone: (data) => {
+          setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), role: 'assistant', content: data.fullResponse, timestamp: new Date() }]);
+          setStreamingText('');
+        },
+        onError: (error) => {
+          setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), role: 'assistant', content: `错误：${error}`, timestamp: new Date() }]);
+          setStreamingText('');
+        },
+      });
+    } catch (error: any) {
+      setMessages((prev) => [...prev, {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: `错误：${error.message || '发送失败'}`,
+        timestamp: new Date(),
+      }]);
+      setStreamingText('');
+    }
   }, [send]);
 
   return { messages, sendMessage, streamingText, isStreaming, cancel };

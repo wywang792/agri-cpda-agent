@@ -12,8 +12,18 @@ export function getLLM(): ChatOpenAI {
     configuration: { baseURL: config.baseUrl },
     temperature: config.temperature,
     maxTokens: config.maxTokens,
+    maxRetries: 0,
+    timeout: config.timeoutMs,
   });
   return llmInstance;
+}
+
+export function isLLMConfigured(): boolean {
+  return Boolean(getLLMConfig().apiKey);
+}
+
+export function getLLMTimeoutMs(): number {
+  return getLLMConfig().timeoutMs;
 }
 
 export function resetLLM(): void {

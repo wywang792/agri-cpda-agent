@@ -10,6 +10,8 @@ export function getEmbeddings(): OpenAIEmbeddings {
     modelName: 'text-embedding-v3',
     openAIApiKey: config.apiKey,
     configuration: { baseURL: config.baseUrl },
+    maxRetries: 0,
+    timeout: config.timeoutMs,
   });
   return embeddingsInstance;
 }

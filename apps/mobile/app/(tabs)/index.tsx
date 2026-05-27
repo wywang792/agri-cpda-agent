@@ -1,5 +1,7 @@
-﻿import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { View, FlatList, StyleSheet, SafeAreaView } from 'react-native';
+import { useRouter } from 'expo-router';
+import * as SecureStore from 'expo-secure-store';
 import { useChat } from '../../src/hooks/useChat';
 import { ChatBubble } from '../../src/components/ChatBubble';
 import { QuickActions } from '../../src/components/QuickActions';
@@ -8,6 +10,13 @@ import { ChatInput } from '../../src/components/ChatInput';
 export default function AgentScreen() {
   const { messages, sendMessage, streamingText, isStreaming } = useChat();
   const flatListRef = useRef<FlatList>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    SecureStore.getItemAsync('auth_token').then((token) => {
+      if (!token) router.replace('/login');
+    });
+  }, [router]);
 
   useEffect(() => { flatListRef.current?.scrollToEnd({ animated: true }); }, [messages, streamingText]);
 
