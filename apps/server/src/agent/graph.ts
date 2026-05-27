@@ -33,7 +33,7 @@ function routeByIntent(state: typeof AgentStateAnnotation.State): string {
     return 'extractEntities';
   }
   if (intent === 'query_order') {
-    return 'retrieveContext';
+    return 'extractEntities';
   }
   return 'generateResponse';
 }

@@ -19,7 +19,7 @@ export async function retrieveContext(state: AgentState): Promise<Partial<AgentS
       break;
     }
     case 'query_order': {
-      const ords = await retrieveOrders(state.userId, { timeRange: state.entities?.timeRange || undefined });
+      const ords = await retrieveOrders(state.userId, state.userRole, { timeRange: state.entities?.timeRange || undefined });
       if (ords.length > 0) {
         context += '相关订单：\n';
         for (const o of ords.slice(0, 5)) {

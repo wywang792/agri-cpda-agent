@@ -50,4 +50,9 @@ describe('fallback extraction rules', () => {
     expect(entities.phone).toBe('18089333333');
     expect(entities.timeRange).toBe('明天中午12点');
   });
+
+  it('keeps today as a query time range', () => {
+    expect(recognizeIntentByRules('查询供应商今天的订单')).toBe('query_order');
+    expect(extractEntitiesByRules('查询供应商今天的订单').timeRange).toBe('今天');
+  });
 });

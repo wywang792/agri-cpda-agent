@@ -1,10 +1,11 @@
 ﻿import { db } from '../db/index.js';
 import { products, orders } from '../db/schema.js';
-import { eq, and, ilike, desc } from 'drizzle-orm';
+import { eq, and, ilike, desc, or, gte, lt } from 'drizzle-orm';
 import { generateEmbedding } from './embeddings.js';
 import { searchProductsByVector } from '../db/vector.js';
 import { withTimeout } from '../agent/timeout.js';
 import { getLLMTimeoutMs } from '../llm/provider.js';
+import type { UserRole } from '@agent-xfd/shared';
 
 export async function retrieveProducts(query: string, marketId: string, limit: number = 5) {
   console.log(`[RAG] retrieveProducts:start query="${query}" marketId=${marketId}`);
@@ -43,10 +44,48 @@ export async function retrieveProducts(query: string, marketId: string, limit: n
   return merged.slice(0, limit);
 }
 
-export async function retrieveOrders(userId: string, filters?: { timeRange?: string }) {
-  console.log(`[RAG] retrieveOrders:start userId=${userId}`);
+export function getOrderTimeRangeBounds(timeRange?: string): { start: Date; end: Date } | null {
+  if (!timeRange) return null;
+
+  const now = new Date();
+  const start = new Date(now);
+  start.setHours(0, 0, 0, 0);
+
+  if (/昨天/.test(timeRange)) {
+    start.setDate(start.getDate() - 1);
+  } else if (!/今天|今日|当日/.test(timeRange)) {
+    return null;
+  }
+
+  const end = new Date(start);
+  end.setDate(end.getDate() + 1);
+  return { start, end };
+}
+
+export async function retrieveOrders(
+  userId: string,
+  role: UserRole,
+  filters?: { timeRange?: string },
+) {
+  console.log(`[RAG] retrieveOrders:start userId=${userId} role=${role} timeRange=${filters?.timeRange || '-'}`);
+
+  const conditions = [];
+  if (role === 'buyer') {
+    conditions.push(eq(orders.buyerId, userId));
+  } else if (role === 'supplier') {
+    conditions.push(eq(orders.supplierId, userId));
+  } else {
+    conditions.push(or(eq(orders.buyerId, userId), eq(orders.supplierId, userId))!);
+  }
+
+  const range = getOrderTimeRangeBounds(filters?.timeRange);
+  if (range) {
+    conditions.push(gte(orders.createdAt, range.start));
+    conditions.push(lt(orders.createdAt, range.end));
+  }
+
   return db.select().from(orders)
-    .where(eq(orders.buyerId, userId))
+    .where(and(...conditions))
     .orderBy(desc(orders.createdAt))
     .limit(10);
 }
