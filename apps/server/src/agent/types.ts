@@ -1,4 +1,5 @@
 ﻿import type { AgentIntent, Order } from '@agent-xfd/shared';
+import type { OrderDraft } from '../modules/chat/types.js';
 
 export interface AgentState {
   message: string;
@@ -11,6 +12,9 @@ export interface AgentState {
   context: string;
   response: string;
   orderPreview: Order | null;
+  orderDraft?: OrderDraft | null;
+  createdOrder?: Order | null;
+  missingFields?: string[];
   suggestions: string[];
   history: Array<{ role: 'user' | 'assistant'; content: string }>;
 }
