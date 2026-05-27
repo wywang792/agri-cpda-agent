@@ -3,6 +3,7 @@ import * as SecureStore from 'expo-secure-store';
 import { API_BASE } from '../services/config';
 
 interface SSEOptions {
+  conversationId?: string;
   onText?: (content: string) => void;
   onOrderPreview?: (order: any) => void;
   onSuggestions?: (suggestions: string[]) => void;
@@ -23,9 +24,9 @@ function createSSEParser(options: SSEOptions) {
       else if (event === 'order_preview') options.onOrderPreview?.(data);
       else if (event === 'suggestions') options.onSuggestions?.(data);
       else if (event === 'done') options.onDone?.(data);
-      else if (event === 'error') options.onError?.(data.error || '服务端处理失败');
+      else if (event === 'error') options.onError?.(data.error || '\u670d\u52a1\u7aef\u5904\u7406\u5931\u8d25');
     } catch (error: any) {
-      options.onError?.(`SSE 解析失败：${error.message}`);
+      options.onError?.(`SSE \u89e3\u6790\u5931\u8d25\uff1a${error.message}`);
     }
   }
 
@@ -83,9 +84,9 @@ function startSSERequest(url: string, token: string, message: string, options: S
         reject(new Error(`HTTP ${xhr.status}`));
       }
     };
-    xhr.onerror = () => reject(new Error('网络请求失败'));
-    xhr.ontimeout = () => reject(new Error(`请求超时：无法连接 ${API_BASE}`));
-    xhr.onabort = () => reject(new Error('请求已取消'));
+    xhr.onerror = () => reject(new Error('\u7f51\u7edc\u8bf7\u6c42\u5931\u8d25'));
+    xhr.ontimeout = () => reject(new Error(`\u8bf7\u6c42\u8d85\u65f6\uff1a\u65e0\u6cd5\u8fde\u63a5 ${API_BASE}`));
+    xhr.onabort = () => reject(new Error('\u8bf7\u6c42\u5df2\u53d6\u6d88'));
   });
 
   xhr.open('POST', url);
@@ -93,7 +94,7 @@ function startSSERequest(url: string, token: string, message: string, options: S
   xhr.setRequestHeader('Content-Type', 'application/json');
   xhr.setRequestHeader('Authorization', `Bearer ${token}`);
   xhr.timeout = 30000;
-  xhr.send(JSON.stringify({ message }));
+  xhr.send(JSON.stringify({ conversationId: options.conversationId, message }));
 
   return { xhr, done };
 }

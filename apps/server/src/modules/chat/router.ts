@@ -5,6 +5,13 @@ import { buildAgentGraph } from '../../agent/graph.js';
 import { db } from '../../db/index.js';
 import { users } from '../../db/schema.js';
 import { eq } from 'drizzle-orm';
+import {
+  appendConversationMessage,
+  getConversationForUser,
+  getLatestOrderDraft,
+  getOrCreateCurrentConversation,
+  toAgentHistory,
+} from './service.js';
 
 type AuthVariables = {
   userId: string;
@@ -16,6 +23,16 @@ chatRouter.use('*', authMiddleware);
 
 const agentGraph = buildAgentGraph();
 
+chatRouter.get('/current', async (c) => {
+  const userId = c.get('userId');
+  const conversation = await getOrCreateCurrentConversation(userId);
+
+  return c.json({
+    conversationId: conversation.id,
+    messages: conversation.messages,
+  });
+});
+
 chatRouter.post('/stream', async (c) => {
   console.log('[Chat] >>> POST /api/chat/stream received');
 
@@ -26,11 +43,26 @@ chatRouter.post('/stream', async (c) => {
     const { message, conversationId } = body;
     const userId = c.get('userId');
     const userRole = c.get('userRole');
-    console.log(`[Chat] userId=${userId}, role=${userRole}, message="${message}"`);
+    console.log(`[Chat] userId=${userId}, role=${userRole}, conversationId=${conversationId || 'current'}, message="${message}"`);
 
     const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
     const marketId = user?.marketId || '';
     console.log(`[Chat] marketId=${marketId}`);
+
+    const initialConversation = conversationId
+      ? await getConversationForUser(conversationId, userId)
+      : await getOrCreateCurrentConversation(userId);
+
+    await appendConversationMessage(initialConversation.id, userId, {
+      role: 'user',
+      content: message,
+      timestamp: new Date().toISOString(),
+    });
+
+    const conversation = await getConversationForUser(initialConversation.id, userId);
+    const history = toAgentHistory(conversation.messages);
+    const orderDraft = getLatestOrderDraft(conversation.messages) || conversation.orderDraft;
+    console.log(`[Chat] conversation=${conversation.id}, history=${history.length}`);
 
     return streamSSE(c, async (stream) => {
       try {
@@ -39,12 +71,30 @@ chatRouter.post('/stream', async (c) => {
 
         console.log('[Chat] Invoking agent graph...');
         const result = await agentGraph.invoke({
-          message, userId, userRole, marketId, conversationId,
+          message, userId, userRole, marketId, conversationId: conversation.id,
           intent: null, entities: null, context: '', response: '',
-          orderPreview: null, suggestions: [], history: [],
-        });
+          orderPreview: null,
+          orderDraft,
+          createdOrder: null,
+          missingFields: [],
+          suggestions: [],
+          history,
+        } as any) as any;
 
         console.log(`[Chat] Agent done. intent=${result.intent}, response length=${result.response?.length}`);
+
+        const order = result.createdOrder || result.orderPreview || null;
+        await appendConversationMessage(conversation.id, userId, {
+          role: 'assistant',
+          content: result.response,
+          timestamp: new Date().toISOString(),
+          metadata: {
+            intent: result.intent,
+            orderDraft: result.orderDraft || null,
+            orderId: order?.id,
+            order,
+          },
+        });
 
         const fullResponse = result.response;
         const chunkSize = 10;
@@ -61,6 +111,16 @@ chatRouter.post('/stream', async (c) => {
         console.log('[Chat] SSE stream completed');
       } catch (error: any) {
         console.error('[Chat] Agent error:', error.message, error.stack);
+        try {
+          await appendConversationMessage(conversation.id, userId, {
+            role: 'assistant',
+            content: error.message || 'Assistant response failed',
+            timestamp: new Date().toISOString(),
+            metadata: { error: error.message },
+          });
+        } catch (persistError: any) {
+          console.error('[Chat] Failed to persist assistant error:', persistError.message);
+        }
         await stream.writeSSE({ event: 'error', data: JSON.stringify({ error: error.message }) });
       }
     });
