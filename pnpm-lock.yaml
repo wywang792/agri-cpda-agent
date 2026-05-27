@@ -7,13 +7,59 @@ settings:
 importers:
 
   .:
+    dependencies:
+      '@agent-xfd/shared':
+        specifier: workspace:*
+        version: link:packages/shared
+      '@langchain/core':
+        specifier: ^0.3.0
+        version: 0.3.80(openai@4.104.0(ws@8.21.0)(zod@3.25.76))
+      '@langchain/langgraph':
+        specifier: ^0.2.0
+        version: 0.2.74(@langchain/core@0.3.80(openai@4.104.0(ws@8.21.0)(zod@3.25.76)))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(zod-to-json-schema@3.25.2(zod@3.25.76))
+      '@langchain/openai':
+        specifier: ^0.3.0
+        version: 0.3.17(@langchain/core@0.3.80(openai@4.104.0(ws@8.21.0)(zod@3.25.76)))(ws@8.21.0)
+      bcryptjs:
+        specifier: ^2.4.3
+        version: 2.4.3
+      dotenv:
+        specifier: ^16.4.0
+        version: 16.6.1
+      drizzle-orm:
+        specifier: ^0.32.0
+        version: 0.32.2(@types/react@18.3.29)(postgres@3.4.9)(react@18.3.1)
+      hono:
+        specifier: ^4.0.0
+        version: 4.12.23
+      jsonwebtoken:
+        specifier: ^9.0.0
+        version: 9.0.3
+      postgres:
+        specifier: ^3.4.0
+        version: 3.4.9
+      zod:
+        specifier: ^3.23.0
+        version: 3.25.76
     devDependencies:
-      turbo:
-        specifier: ^2.0.0
-        version: 2.9.15
+      '@types/bcryptjs':
+        specifier: ^2.4.0
+        version: 2.4.6
+      '@types/jsonwebtoken':
+        specifier: ^9.0.0
+        version: 9.0.10
+      drizzle-kit:
+        specifier: ^0.24.0
+        version: 0.24.2
+      tsx:
+        specifier: ^4.0.0
+        version: 4.22.3
       typescript:
         specifier: ^5.5.0
         version: 5.9.3
+      vitest:
+        specifier: ^2.0.0
+        version: 2.1.9(@types/node@25.9.1)(lightningcss@1.27.0)(terser@5.48.0)
 
   apps/mobile:
     dependencies:
@@ -34,7 +80,7 @@ importers:
         version: 7.0.5(expo@52.0.49(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@expo/metro-runtime@4.0.1(react-native@0.76.0(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.29)(react@18.3.1)))(react-native@0.76.0(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.29)(react@18.3.1))(react@18.3.1))(react-native@0.76.0(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.29)(react@18.3.1))(react@18.3.1)
       expo-router:
         specifier: ~4.0.0
-        version: 4.0.22(expo-constants@17.0.8(expo@52.0.49(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@expo/metro-runtime@4.0.1(react-native@0.76.0(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.29)(react@18.3.1)))(react-native@0.76.0(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.29)(react@18.3.1))(react@18.3.1))(react-native@0.76.0(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.29)(react@18.3.1)))(expo-linking@7.0.5(expo@52.0.49(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@expo/metro-runtime@4.0.1(react-native@0.76.0(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.29)(react@18.3.1)))(react-native@0.76.0(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.29)(react@18.3.1))(react@18.3.1))(react-native@0.76.0(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.29)(react@18.3.1))(react@18.3.1))(expo@52.0.49(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@expo/metro-runtime@4.0.1(react-native@0.76.0(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.29)(react@18.3.1)))(react-native@0.76.0(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.29)(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react-native-safe-area-context@4.12.0(react-native@0.76.0(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.29)(react@18.3.1))(react@18.3.1))(react-native-screens@4.1.0(react-native@0.76.0(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.29)(react@18.3.1))(react@18.3.1))(react-native@0.76.0(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.29)(react@18.3.1))(react@18.3.1)
+        version: 4.0.22(8a7c53fcaf6f89d46057d3da145aef3e)
       expo-secure-store:
         specifier: ~14.0.0
         version: 14.0.1(expo@52.0.49(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@expo/metro-runtime@4.0.1(react-native@0.76.0(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.29)(react@18.3.1)))(react-native@0.76.0(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.29)(react@18.3.1))(react@18.3.1))
@@ -71,7 +117,7 @@ importers:
         version: 0.3.80(openai@4.104.0(ws@8.21.0)(zod@3.25.76))
       '@langchain/langgraph':
         specifier: ^0.2.0
-        version: 0.2.74(@langchain/core@0.3.80(openai@4.104.0(ws@8.21.0)(zod@3.25.76)))(react@18.3.1)(zod-to-json-schema@3.25.2(zod@3.25.76))
+        version: 0.2.74(@langchain/core@0.3.80(openai@4.104.0(ws@8.21.0)(zod@3.25.76)))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(zod-to-json-schema@3.25.2(zod@3.25.76))
       '@langchain/openai':
         specifier: ^0.3.0
         version: 0.3.17(@langchain/core@0.3.80(openai@4.104.0(ws@8.21.0)(zod@3.25.76)))(ws@8.21.0)
@@ -1435,7 +1481,7 @@ packages:
 
   '@expo/bunyan@4.0.1':
     resolution: {integrity: sha512-+Lla7nYSiHZirgK+U/uYzsLv/X+HaJienbD5AKX1UQZHYfWaP+9uuQluRB4GrEVWF0GZ7vEVp/jzaOT9k/SQlg==}
-    engines: {node: '>=0.10.0'}
+    engines: {'0': node >=0.10.0}
 
   '@expo/cli@0.22.28':
     resolution: {integrity: sha512-lvt72KNitGuixYD2l3SZmRKVu2G4zJpmg5V7WfUBNpmUU5oODBw/6qmiJ6kSLAlfDozscUk+BBGknBBzxUrwrA==}
@@ -1944,36 +1990,6 @@ packages:
 
   '@sinonjs/fake-timers@10.3.0':
     resolution: {integrity: sha512-V4BG07kuYSUkTCSBHG8G8TNhM+F19jXFWnQtzj+we8DrkpSBCee9Z3Ms8yiGer/dlmhe35/Xdgyo3/0rQKg7YA==}
-
-  '@turbo/darwin-64@2.9.15':
-    resolution: {integrity: sha512-nnDo9R1Df+s2x6jxlERtbg7xRpuicf8p4J2krcnjeaMBt3q9V41pGXa4t9YM2Y4ozozsVJ+CH405CJUrWIQK4Q==}
-    cpu: [x64]
-    os: [darwin]
-
-  '@turbo/darwin-arm64@2.9.15':
-    resolution: {integrity: sha512-fDSx56oqoFuS+yUQw7hqjQTkjrSLdMcplhuLC8HcSkWC6YrpwEmUUYsPYHPxy4ALvLxnmPQuk6XoSD8tdkjP+g==}
-    cpu: [arm64]
-    os: [darwin]
-
-  '@turbo/linux-64@2.9.15':
-    resolution: {integrity: sha512-/bmxn+x/xE+oh0VzEXt/zf2zsORAYZPrL3db5/VrXzYt0Z4wxcvffwJBGlSfla2smfS1BLGBiyWldJlWDXJVXA==}
-    cpu: [x64]
-    os: [linux]
-
-  '@turbo/linux-arm64@2.9.15':
-    resolution: {integrity: sha512-cbOaDe1ijz5As+mimOOHgmRMolZZZO7miNBHHp5xdiYMm2Q/Dwu1JVLx/Kw4s7xjocG/oEoHrpHrxpEAIEfNiw==}
-    cpu: [arm64]
-    os: [linux]
-
-  '@turbo/windows-64@2.9.15':
-    resolution: {integrity: sha512-/Fzm7afui7uK7dFBwrTXKuDhBBTiHk5I+hMVAPMR7cqQyDo2norCNUsN9PdNuYcmzYbhSOxzz498wQYvSAz29w==}
-    cpu: [x64]
-    os: [win32]
-
-  '@turbo/windows-arm64@2.9.15':
-    resolution: {integrity: sha512-fOHEsLcqVdFXLw2ApWv4gxwfHzkUnpo9rHGml+9+dyHj148m/Bc+556kEvb5+4u6prI1LMd8zEZE2HcO6Jn2VQ==}
-    cpu: [arm64]
-    os: [win32]
 
   '@types/babel__core@7.20.5':
     resolution: {integrity: sha512-qoQprZvz5wQFJwMDqeseRXWv3rqMvhgpbXFfVyWhbx9X47POIA6i/+dXefEmZKoAgOaTdaIgNSMqMIU61yRyzA==}
@@ -4597,10 +4613,6 @@ packages:
     engines: {node: '>=18.0.0'}
     hasBin: true
 
-  turbo@2.9.15:
-    resolution: {integrity: sha512-VpKvD9Z0Hu/xrGUAYX1wnhfpqv835wIwGqeKfulvBPTOcDap0E3nFwyzCAVV85fB1sBcBDEfTP+7FSW7GzwWSQ==}
-    hasBin: true
-
   type-detect@4.0.8:
     resolution: {integrity: sha512-0fr/mIH1dlO+x7TlcMy+bIDqKPsw/70tVyeHW787goQjhmqaZe10uwLujubK9q9Lg6Fiho1KUKDYz0Z7k7g5/g==}
     engines: {node: '>=4'}
@@ -6581,7 +6593,7 @@ snapshots:
       '@langchain/core': 0.3.80(openai@4.104.0(ws@8.21.0)(zod@3.25.76))
       uuid: 10.0.0
 
-  '@langchain/langgraph-sdk@0.0.112(@langchain/core@0.3.80(openai@4.104.0(ws@8.21.0)(zod@3.25.76)))(react@18.3.1)':
+  '@langchain/langgraph-sdk@0.0.112(@langchain/core@0.3.80(openai@4.104.0(ws@8.21.0)(zod@3.25.76)))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@types/json-schema': 7.0.15
       p-queue: 6.6.2
@@ -6590,12 +6602,13 @@ snapshots:
     optionalDependencies:
       '@langchain/core': 0.3.80(openai@4.104.0(ws@8.21.0)(zod@3.25.76))
       react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
 
-  '@langchain/langgraph@0.2.74(@langchain/core@0.3.80(openai@4.104.0(ws@8.21.0)(zod@3.25.76)))(react@18.3.1)(zod-to-json-schema@3.25.2(zod@3.25.76))':
+  '@langchain/langgraph@0.2.74(@langchain/core@0.3.80(openai@4.104.0(ws@8.21.0)(zod@3.25.76)))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(zod-to-json-schema@3.25.2(zod@3.25.76))':
     dependencies:
       '@langchain/core': 0.3.80(openai@4.104.0(ws@8.21.0)(zod@3.25.76))
       '@langchain/langgraph-checkpoint': 0.0.18(@langchain/core@0.3.80(openai@4.104.0(ws@8.21.0)(zod@3.25.76)))
-      '@langchain/langgraph-sdk': 0.0.112(@langchain/core@0.3.80(openai@4.104.0(ws@8.21.0)(zod@3.25.76)))(react@18.3.1)
+      '@langchain/langgraph-sdk': 0.0.112(@langchain/core@0.3.80(openai@4.104.0(ws@8.21.0)(zod@3.25.76)))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       uuid: 10.0.0
       zod: 3.25.76
     optionalDependencies:
@@ -7032,24 +7045,6 @@ snapshots:
     dependencies:
       '@sinonjs/commons': 3.0.1
 
-  '@turbo/darwin-64@2.9.15':
-    optional: true
-
-  '@turbo/darwin-arm64@2.9.15':
-    optional: true
-
-  '@turbo/linux-64@2.9.15':
-    optional: true
-
-  '@turbo/linux-arm64@2.9.15':
-    optional: true
-
-  '@turbo/windows-64@2.9.15':
-    optional: true
-
-  '@turbo/windows-arm64@2.9.15':
-    optional: true
-
   '@types/babel__core@7.20.5':
     dependencies:
       '@babel/parser': 7.29.7
@@ -7102,7 +7097,7 @@ snapshots:
 
   '@types/node-fetch@2.6.13':
     dependencies:
-      '@types/node': 18.19.130
+      '@types/node': 25.9.1
       form-data: 4.0.5
 
   '@types/node-forge@1.3.14':
@@ -7758,7 +7753,7 @@ snapshots:
 
   dotenv-expand@11.0.7:
     dependencies:
-      dotenv: 16.4.7
+      dotenv: 16.6.1
 
   dotenv@16.4.7: {}
 
@@ -8058,8 +8053,8 @@ snapshots:
     dependencies:
       invariant: 2.2.4
 
-  ? expo-router@4.0.22(expo-constants@17.0.8(expo@52.0.49(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@expo/metro-runtime@4.0.1(react-native@0.76.0(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.29)(react@18.3.1)))(react-native@0.76.0(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.29)(react@18.3.1))(react@18.3.1))(react-native@0.76.0(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.29)(react@18.3.1)))(expo-linking@7.0.5(expo@52.0.49(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@expo/metro-runtime@4.0.1(react-native@0.76.0(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.29)(react@18.3.1)))(react-native@0.76.0(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.29)(react@18.3.1))(react@18.3.1))(react-native@0.76.0(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.29)(react@18.3.1))(react@18.3.1))(expo@52.0.49(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@expo/metro-runtime@4.0.1(react-native@0.76.0(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.29)(react@18.3.1)))(react-native@0.76.0(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.29)(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react-native-safe-area-context@4.12.0(react-native@0.76.0(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.29)(react@18.3.1))(react@18.3.1))(react-native-screens@4.1.0(react-native@0.76.0(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.29)(react@18.3.1))(react@18.3.1))(react-native@0.76.0(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.29)(react@18.3.1))(react@18.3.1)
-  : dependencies:
+  expo-router@4.0.22(8a7c53fcaf6f89d46057d3da145aef3e):
+    dependencies:
       '@expo/metro-runtime': 4.0.1(react-native@0.76.0(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.29)(react@18.3.1))
       '@expo/server': 0.5.3
       '@radix-ui/react-slot': 1.0.1(react@18.3.1)
@@ -9877,15 +9872,6 @@ snapshots:
       esbuild: 0.28.0
     optionalDependencies:
       fsevents: 2.3.3
-
-  turbo@2.9.15:
-    optionalDependencies:
-      '@turbo/darwin-64': 2.9.15
-      '@turbo/darwin-arm64': 2.9.15
-      '@turbo/linux-64': 2.9.15
-      '@turbo/linux-arm64': 2.9.15
-      '@turbo/windows-64': 2.9.15
-      '@turbo/windows-arm64': 2.9.15
 
   type-detect@4.0.8: {}
 
