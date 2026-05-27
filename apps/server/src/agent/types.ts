@@ -1,4 +1,4 @@
-﻿import type { AgentIntent, Order } from '@agent-xfd/shared';
+import type { AgentIntent, Order } from '@agent-xfd/shared';
 import type { OrderDraft } from '../modules/chat/types.js';
 
 export interface AgentState {
@@ -25,4 +25,5 @@ export interface ExtractedEntities {
   supplier: string | null;
   deliveryAddress: string | null;
   timeRange: string | null;
+  phone?: string | null;
 }
