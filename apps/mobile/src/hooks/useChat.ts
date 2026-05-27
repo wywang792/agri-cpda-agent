@@ -48,6 +48,14 @@ export function useChat() {
       })
       .catch((error: any) => {
         console.warn('[Chat] Failed to load current conversation:', error.message);
+        if (!isActive) return;
+
+        setMessages([{
+          id: 'load-error',
+          role: 'assistant',
+          content: `加载会话失败：${error.message || '未知错误'}`,
+          timestamp: new Date(),
+        }]);
       });
 
     return () => {
