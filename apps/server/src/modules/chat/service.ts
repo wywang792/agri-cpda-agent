@@ -1,4 +1,4 @@
-import { and, desc, eq, sql } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 import { db } from '../../db/index.js';
 import { conversations } from '../../db/schema.js';
 import type { ConversationMessage, CurrentConversationResponse, OrderDraft } from './types.js';
@@ -42,13 +42,24 @@ function normalizeMessage(value: unknown): ConversationMessage | null {
   return message;
 }
 
-function normalizeMessages(value: unknown): ConversationMessage[] {
+export function normalizeMessages(value: unknown): ConversationMessage[] {
   if (!Array.isArray(value)) {
     return [];
   }
 
   return value
-    .map((message) => normalizeMessage(message))
+    .flatMap((message) => {
+      if (typeof message === 'string') {
+        try {
+          const parsed = JSON.parse(message);
+          return normalizeMessages(Array.isArray(parsed) ? parsed : [parsed]);
+        } catch {
+          return [];
+        }
+      }
+
+      return [normalizeMessage(message)];
+    })
     .filter((message): message is ConversationMessage => message !== null);
 }
 
@@ -116,11 +127,14 @@ export async function appendConversationMessage(
     throw new Error('Invalid conversation message');
   }
 
+  const conversation = await getConversationForUser(conversationId, userId);
+  const messages = [...conversation.messages, normalizedMessage];
+
   const [updatedConversation] = await db
     .update(conversations)
     .set({
-      messages: sql`${conversations.messages} || ${JSON.stringify([normalizedMessage])}::jsonb`,
-      updatedAt: sql`now()`,
+      messages,
+      updatedAt: new Date(),
     })
     .where(and(eq(conversations.id, conversationId), eq(conversations.userId, userId)))
     .returning();
