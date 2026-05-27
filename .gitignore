@@ -6,3 +6,4 @@ dist/
 .superpowers/
 .turbo/
 design-system/
+apps/server/.env
