@@ -1,7 +1,7 @@
-﻿import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import * as SecureStore from 'expo-secure-store';
 
-const API_BASE = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+const API_BASE = process.env.EXPO_PUBLIC_API_URL || 'http://10.0.2.2:3000';
 
 interface SSEOptions {
   onText?: (content: string) => void;

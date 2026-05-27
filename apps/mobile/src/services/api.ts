@@ -1,6 +1,6 @@
-﻿import * as SecureStore from 'expo-secure-store';
+import * as SecureStore from 'expo-secure-store';
 
-const API_BASE = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+const API_BASE = process.env.EXPO_PUBLIC_API_URL || 'http://10.0.2.2:3000';
 
 async function getToken(): Promise<string | null> {
   return SecureStore.getItemAsync('auth_token');
