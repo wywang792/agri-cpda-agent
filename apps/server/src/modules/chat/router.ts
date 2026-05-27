@@ -79,7 +79,7 @@ chatRouter.post('/stream', async (c) => {
           missingFields: [],
           suggestions: [],
           history,
-        } as any) as any;
+        });
 
         console.log(`[Chat] Agent done. intent=${result.intent}, response length=${result.response?.length}`);
 

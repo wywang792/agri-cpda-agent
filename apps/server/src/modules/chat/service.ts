@@ -148,7 +148,19 @@ export function getLatestOrderDraft(messages: ConversationMessage[]): OrderDraft
   const normalizedMessages = normalizeMessages(messages);
 
   for (let index = normalizedMessages.length - 1; index >= 0; index -= 1) {
-    const orderDraft = normalizedMessages[index]?.metadata?.orderDraft;
+    const metadata = normalizedMessages[index]?.metadata;
+    if (!metadata) {
+      continue;
+    }
+
+    if (
+      metadata.orderId ||
+      (Object.prototype.hasOwnProperty.call(metadata, 'orderDraft') && metadata.orderDraft === null)
+    ) {
+      return null;
+    }
+
+    const orderDraft = metadata.orderDraft;
     if (isOrderDraft(orderDraft)) {
       return orderDraft;
     }

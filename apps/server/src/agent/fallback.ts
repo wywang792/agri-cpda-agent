@@ -1,30 +1,123 @@
-import type { AgentIntent } from '@agent-xfd/shared';
+import type { AgentIntent, Order } from '@agent-xfd/shared';
+import type { OrderDraft } from '../modules/chat/types.js';
 import type { ExtractedEntities } from './types.js';
 
-export function recognizeIntentByRules(message: string): AgentIntent {
-  if (/确认|就这个|可以|同意/.test(message)) return 'confirm_order';
+type HistoryEntry = { role: 'user' | 'assistant'; content: string };
+
+export function formatHistory(history: HistoryEntry[] = [], limit = 10): string {
+  return history
+    .slice(-limit)
+    .map((item) => `${item.role === 'user' ? '用户' : '助手'}：${item.content}`)
+    .join('\n');
+}
+
+function getConversationText(message: string, history: HistoryEntry[] = []): string {
+  return `${formatHistory(history)}\n用户：${message}`;
+}
+
+function hasActiveOrderContext(history: HistoryEntry[] = []): boolean {
+  const text = formatHistory(history, 8);
+  return /下单|订单|商品明细|确认下单|配送|收货|土豆|白菜|西红柿|胡萝卜|黄瓜|[一二两三四五六七八九十百千万\d]+\s*(斤|箱|袋)/.test(text);
+}
+
+export function recognizeIntentByRules(message: string, history: HistoryEntry[] = []): AgentIntent {
+  if (/确认|就这个|可以|同意|没问题/.test(message) && hasActiveOrderContext(history)) return 'confirm_order';
   if (/取消|撤销|不要了/.test(message)) return 'cancel';
   if (/推荐|买什么|买点啥|什么好/.test(message)) return 'recommend';
   if (/多少钱|价格|价钱|报价/.test(message)) return 'ask_price';
   if (/订单|送到|状态|昨天|今天|历史/.test(message) && /查|看|到没|有没有/.test(message)) return 'query_order';
-  if (/下单|采购|购买|来\s*\d+|要\s*\d+|\d+\s*(斤|箱|袋)/.test(message)) return 'place_order';
+  if (/下单|采购|购买|来\s*[一二两三四五六七八九十百千万\d]+|要\s*[一二两三四五六七八九十百千万\d]+|送\s*[一二两三四五六七八九十百千万\d]+|[一二两三四五六七八九十百千万\d]+\s*(斤|箱|袋)/.test(message)) return 'place_order';
+  if (hasActiveOrderContext(history) && /电话|地址|送|明天|今天|中午|下午|上午|\d{11}/.test(message)) return 'place_order';
   return 'chat';
 }
 
-export function extractEntitiesByRules(message: string): ExtractedEntities {
-  const itemMatches = Array.from(message.matchAll(/([\u4e00-\u9fa5A-Za-z]+)\s*(\d+(?:\.\d+)?)\s*(斤|箱|袋|个|件)?/g));
-  const items = itemMatches.map((match) => ({
-    name: match[1],
-    quantity: Number(match[2]),
-    unit: match[3] || '斤',
-  }));
+function parseChineseNumber(value: string): number {
+  if (/^\d+(?:\.\d+)?$/.test(value)) {
+    return Number(value);
+  }
+
+  const digits: Record<string, number> = {
+    零: 0, 一: 1, 二: 2, 两: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9,
+  };
+  const units: Record<string, number> = { 十: 10, 百: 100, 千: 1000, 万: 10000 };
+  let total = 0;
+  let section = 0;
+  let current = 0;
+
+  for (const char of value) {
+    if (char in digits) {
+      current = digits[char];
+      continue;
+    }
+
+    const unit = units[char];
+    if (!unit) continue;
+    if (unit === 10000) {
+      section = (section + current) * unit;
+      total += section;
+      section = 0;
+    } else {
+      section += (current || 1) * unit;
+    }
+    current = 0;
+  }
+
+  return total + section + current;
+}
+
+function findItems(text: string): ExtractedEntities['items'] {
+  const items: ExtractedEntities['items'] = [];
+  const seen = new Set<string>();
+  const quantity = '([一二两三四五六七八九十百千万\\d]+(?:\\.\\d+)?)';
+  const unit = '(斤|箱|袋|个|件)';
+  const name = '([\\u4e00-\\u9fa5A-Za-z]{1,12})';
+  const patterns = [
+    { regex: new RegExp(`${name}\\s*${quantity}\\s*${unit}`, 'g'), nameFirst: true },
+    { regex: new RegExp(`${quantity}\\s*${unit}\\s*${name}`, 'g'), nameFirst: false },
+  ];
+
+  for (const pattern of patterns) {
+    for (const match of text.matchAll(pattern.regex)) {
+      const productName = (pattern.nameFirst ? match[1] : match[3]).replace(/^(送|来|要|买|采购|下单)/, '');
+      const quantityText = pattern.nameFirst ? match[2] : match[1];
+      const unitText = (pattern.nameFirst ? match[3] : match[2]) || '斤';
+      const parsedQuantity = parseChineseNumber(quantityText);
+      const key = `${productName}:${parsedQuantity}:${unitText}`;
+
+      if (
+        !productName ||
+        /^(用户|助手|下单|订单|商品明细|确认)$/.test(productName) ||
+        productName.length > 12 ||
+        parsedQuantity <= 0 ||
+        seen.has(key)
+      ) {
+        continue;
+      }
+
+      seen.add(key);
+      items.push({ name: productName, quantity: parsedQuantity, unit: unitText });
+    }
+  }
+
+  return items;
+}
+
+export function extractEntitiesByRules(message: string, history: HistoryEntry[] = []): ExtractedEntities {
+  const text = getConversationText(message, history);
+  const items = findItems(text);
+
+  const phoneMatch = text.match(/1[3-9]\d{9}/);
+  const timeMatch = text.match(/(今天|明天|后天)?\s*(上午|中午|下午|晚上)?\s*\d{1,2}\s*点/);
+  const addressMatch = text.match(/(?:地址|送到|配送到|收货地址)?[:：\s]*([\u4e00-\u9fa5A-Za-z0-9]{2,}(?:市|区|县|路|街|楼|号|仓|市场|店|摊)[\u4e00-\u9fa5A-Za-z0-9]*)/);
+  const buyerMatch = text.match(/(?:我是|联系人|客户|采购商)?\s*([\u4e00-\u9fa5]{2,4})\s*(?:1[3-9]\d{9})/);
 
   return {
     items,
-    buyer: null,
+    buyer: buyerMatch?.[1] || null,
     supplier: null,
-    deliveryAddress: null,
-    timeRange: /昨天/.test(message) ? '昨天' : /今天/.test(message) ? '今天' : null,
+    deliveryAddress: addressMatch?.[1] || null,
+    timeRange: timeMatch?.[0]?.replace(/\s+/g, '') || (/昨天/.test(text) ? '昨天' : /今天/.test(text) ? '今天' : null),
+    phone: phoneMatch?.[0] || null,
   };
 }
 
@@ -32,8 +125,26 @@ export function generateFallbackResponse(params: {
   intent: AgentIntent | null;
   message: string;
   context?: string;
+  history?: HistoryEntry[];
+  orderDraft?: OrderDraft | null;
+  createdOrder?: Order | null;
+  missingFields?: string[];
 }): string {
-  const { intent, message, context } = params;
+  const { intent, message, context, history = [], orderDraft, createdOrder, missingFields = [] } = params;
+
+  if (createdOrder) {
+    return `订单已创建成功，订单号：${createdOrder.orderNo}，金额：￥${createdOrder.totalPrice.toFixed(2)}。我会继续跟进后续分拣和配送状态。`;
+  }
+
+  if (intent === 'confirm_order') {
+    if (missingFields.length > 0) {
+      return `还差${missingFields.join('、')}，补齐后我再帮您确认下单。`;
+    }
+    if (hasActiveOrderContext(history)) {
+      return '好的，已收到您的确认。我会按前面确认的商品、数量和配送信息继续处理订单。';
+    }
+    return '可以，请先把要确认的订单商品、数量和配送信息发给我。';
+  }
 
   if (intent === 'ask_price') {
     return context
@@ -46,8 +157,17 @@ export function generateFallbackResponse(params: {
   }
 
   if (intent === 'place_order') {
+    if (orderDraft) {
+      const lines = orderDraft.items.map((item) => {
+        const price = item.unitPrice ? ` × ￥${item.unitPrice}/${item.unit}` : '';
+        return `- ${item.productName}：${item.quantity}${item.unit}${price}`;
+      });
+      const total = orderDraft.totalPrice ? `\n总价约：￥${orderDraft.totalPrice.toFixed(2)}` : '';
+      const missing = missingFields.length > 0 ? `\n还需要补充：${missingFields.join('、')}` : '\n请确认以上信息是否下单。';
+      return `好的，我先整理当前订单：\n${lines.join('\n')}${total}${missing}`;
+    }
     return context
-      ? `我先帮你整理一下下单信息：\n${context}\n请再确认采购方、供应商和配送地址。`
+      ? `我先帮你整理一下下单信息：\n${context}\n请确认采购方、供应商和配送地址。`
       : '可以，我需要商品、数量、供应商和配送地址，例如“来100斤土豆送到城东仓库”。';
   }
 

@@ -1,10 +1,12 @@
 ﻿import { StateGraph, END, START } from '@langchain/langgraph';
 import { Annotation } from '@langchain/langgraph';
 import type { AgentIntent, Order } from '@agent-xfd/shared';
+import type { OrderDraft } from '../modules/chat/types.js';
 import type { ExtractedEntities } from './types.js';
 import { recognizeIntent } from './intent.js';
 import { extractEntities } from './entities.js';
 import { retrieveContext } from './retrieval.js';
+import { applyOrderFlow } from './orderDraft.js';
 import { generateResponse } from './response.js';
 
 const AgentStateAnnotation = Annotation.Root({
@@ -18,13 +20,16 @@ const AgentStateAnnotation = Annotation.Root({
   context: Annotation<string>,
   response: Annotation<string>,
   orderPreview: Annotation<Order | null>,
+  orderDraft: Annotation<OrderDraft | null>,
+  createdOrder: Annotation<Order | null>,
+  missingFields: Annotation<string[]>,
   suggestions: Annotation<string[]>,
   history: Annotation<Array<{ role: 'user' | 'assistant'; content: string }>>,
 });
 
 function routeByIntent(state: typeof AgentStateAnnotation.State): string {
   const intent = state.intent;
-  if (intent === 'place_order' || intent === 'ask_price' || intent === 'recommend') {
+  if (intent === 'place_order' || intent === 'confirm_order' || intent === 'ask_price' || intent === 'recommend') {
     return 'extractEntities';
   }
   if (intent === 'query_order') {
@@ -38,6 +43,7 @@ export function buildAgentGraph() {
     .addNode('recognizeIntent', recognizeIntent)
     .addNode('extractEntities', extractEntities)
     .addNode('retrieveContext', retrieveContext)
+    .addNode('applyOrderFlow', applyOrderFlow)
     .addNode('generateResponse', generateResponse)
     .addEdge(START, 'recognizeIntent')
     .addConditionalEdges('recognizeIntent', routeByIntent, {
@@ -46,7 +52,8 @@ export function buildAgentGraph() {
       generateResponse: 'generateResponse',
     })
     .addEdge('extractEntities', 'retrieveContext')
-    .addEdge('retrieveContext', 'generateResponse')
+    .addEdge('retrieveContext', 'applyOrderFlow')
+    .addEdge('applyOrderFlow', 'generateResponse')
     .addEdge('generateResponse', END);
 
   return graph.compile();
