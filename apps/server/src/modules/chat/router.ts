@@ -10,6 +10,7 @@ import {
   getConversationForUser,
   getLatestOrderDraft,
   getOrCreateCurrentConversation,
+  getPersistedOrderDraft,
   toAgentHistory,
 } from './service.js';
 
@@ -84,13 +85,14 @@ chatRouter.post('/stream', async (c) => {
         console.log(`[Chat] Agent done. intent=${result.intent}, response length=${result.response?.length}`);
 
         const order = result.createdOrder || result.orderPreview || null;
+        const persistedOrderDraft = getPersistedOrderDraft(result.intent, result.orderDraft || null);
         await appendConversationMessage(conversation.id, userId, {
           role: 'assistant',
           content: result.response,
           timestamp: new Date().toISOString(),
           metadata: {
             intent: result.intent,
-            orderDraft: result.orderDraft || null,
+            orderDraft: persistedOrderDraft,
             orderId: order?.id,
             order,
           },

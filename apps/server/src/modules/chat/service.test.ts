@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { normalizeMessages } from './service.js';
+import { getPersistedOrderDraft, normalizeMessages } from './service.js';
 
 describe('normalizeMessages', () => {
   it('flattens legacy stringified message chunks', () => {
@@ -23,5 +23,21 @@ describe('normalizeMessages', () => {
     ])).toEqual([
       { role: 'user', content: '十斤土豆', timestamp },
     ]);
+  });
+});
+
+describe('getPersistedOrderDraft', () => {
+  const draft = {
+    items: [{ productName: '大米', quantity: 100, unit: '斤' }],
+  };
+
+  it('keeps draft state only for order flow intents', () => {
+    expect(getPersistedOrderDraft('place_order', draft)).toBe(draft);
+    expect(getPersistedOrderDraft('confirm_order', draft)).toBe(draft);
+  });
+
+  it('clears draft state for non-order intents so stale drafts do not leak into chat', () => {
+    expect(getPersistedOrderDraft('query_order', draft)).toBeNull();
+    expect(getPersistedOrderDraft('chat', draft)).toBeNull();
   });
 });

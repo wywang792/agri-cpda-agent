@@ -1,4 +1,5 @@
 import { and, desc, eq } from 'drizzle-orm';
+import type { AgentIntent } from '@agent-xfd/shared';
 import { db } from '../../db/index.js';
 import { conversations } from '../../db/schema.js';
 import type { ConversationMessage, CurrentConversationResponse, OrderDraft } from './types.js';
@@ -181,4 +182,12 @@ export function getLatestOrderDraft(messages: ConversationMessage[]): OrderDraft
   }
 
   return null;
+}
+
+export function getPersistedOrderDraft(intent: AgentIntent | null | undefined, orderDraft: OrderDraft | null | undefined): OrderDraft | null {
+  if (intent !== 'place_order' && intent !== 'confirm_order') {
+    return null;
+  }
+
+  return orderDraft || null;
 }
