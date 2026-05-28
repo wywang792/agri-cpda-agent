@@ -1,14 +1,15 @@
 import React, { useCallback, useRef, useEffect } from 'react';
-import { View, FlatList, NativeScrollEvent, NativeSyntheticEvent, StyleSheet, SafeAreaView } from 'react-native';
+import { View, FlatList, NativeScrollEvent, NativeSyntheticEvent, StyleSheet, SafeAreaView, Text, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
+import { Ionicons } from '@expo/vector-icons';
 import { useChat } from '../../src/hooks/useChat';
 import { ChatBubble } from '../../src/components/ChatBubble';
 import { QuickActions } from '../../src/components/QuickActions';
 import { ChatInput } from '../../src/components/ChatInput';
 
 export default function AgentScreen() {
-  const { messages, sendMessage, streamingText, isStreaming } = useChat();
+  const { messages, sendMessage, streamingText, isStreaming, newConversation } = useChat();
   const flatListRef = useRef<FlatList>(null);
   const shouldStickToBottomRef = useRef(true);
   const router = useRouter();
@@ -52,6 +53,20 @@ export default function AgentScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <View style={styles.toolbar}>
+        <Text style={styles.toolbarTitle}>对话</Text>
+        <TouchableOpacity
+          style={[styles.newButton, isStreaming && styles.newButtonDisabled]}
+          onPress={() => {
+            shouldStickToBottomRef.current = true;
+            newConversation();
+          }}
+          disabled={isStreaming}
+        >
+          <Ionicons name="add" size={18} color="#fff" />
+          <Text style={styles.newButtonText}>新对话</Text>
+        </TouchableOpacity>
+      </View>
       <QuickActions onPress={handleQuickAction} />
       <FlatList ref={flatListRef} data={allMessages} keyExtractor={(item) => item.id}
         renderItem={({ item }) => <ChatBubble message={item} />}
@@ -70,5 +85,10 @@ export default function AgentScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fafafa' },
+  toolbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, paddingVertical: 10, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#eee' },
+  toolbarTitle: { fontSize: 15, fontWeight: '700', color: '#1a1a1a' },
+  newButton: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#1a1a1a', paddingHorizontal: 10, paddingVertical: 7, borderRadius: 8 },
+  newButtonDisabled: { opacity: 0.45 },
+  newButtonText: { color: '#fff', fontSize: 12, fontWeight: '700' },
   list: { paddingVertical: 8 },
 });

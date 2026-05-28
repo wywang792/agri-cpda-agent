@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getPersistedOrderDraft, normalizeMessages } from './service.js';
+import { getPersistedOrderDraft, normalizeMessages, toConversationResponse } from './service.js';
 
 describe('normalizeMessages', () => {
   it('flattens legacy stringified message chunks', () => {
@@ -23,6 +23,27 @@ describe('normalizeMessages', () => {
     ])).toEqual([
       { role: 'user', content: '十斤土豆', timestamp },
     ]);
+  });
+});
+
+describe('toConversationResponse', () => {
+  it('returns a standard empty conversation response', () => {
+    const now = new Date('2026-05-28T00:00:00.000Z');
+
+    expect(toConversationResponse({
+      id: 'conversation-1',
+      userId: 'user-1',
+      messages: [],
+      createdAt: now,
+      updatedAt: now,
+    })).toEqual({
+      id: 'conversation-1',
+      userId: 'user-1',
+      messages: [],
+      orderDraft: null,
+      createdAt: now,
+      updatedAt: now,
+    });
   });
 });
 

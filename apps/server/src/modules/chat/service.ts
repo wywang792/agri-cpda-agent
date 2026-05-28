@@ -68,7 +68,7 @@ function isOrderDraft(value: unknown): value is OrderDraft {
   return Boolean(value && typeof value === 'object' && Array.isArray((value as OrderDraft).items));
 }
 
-function toCurrentConversationResponse(row: ConversationRow): CurrentConversationResponse {
+export function toConversationResponse(row: ConversationRow): CurrentConversationResponse {
   const messages = normalizeMessages(row.messages);
 
   return {
@@ -90,7 +90,7 @@ export async function getOrCreateCurrentConversation(userId: string): Promise<Cu
     .limit(1);
 
   if (currentConversation) {
-    return toCurrentConversationResponse(currentConversation);
+    return toConversationResponse(currentConversation);
   }
 
   const [createdConversation] = await db
@@ -98,7 +98,16 @@ export async function getOrCreateCurrentConversation(userId: string): Promise<Cu
     .values({ userId, messages: [] })
     .returning();
 
-  return toCurrentConversationResponse(createdConversation);
+  return toConversationResponse(createdConversation);
+}
+
+export async function createConversation(userId: string): Promise<CurrentConversationResponse> {
+  const [createdConversation] = await db
+    .insert(conversations)
+    .values({ userId, messages: [] })
+    .returning();
+
+  return toConversationResponse(createdConversation);
 }
 
 export async function getConversationForUser(
@@ -115,7 +124,7 @@ export async function getConversationForUser(
     throw new Error('Conversation not found');
   }
 
-  return toCurrentConversationResponse(conversation);
+  return toConversationResponse(conversation);
 }
 
 export async function appendConversationMessage(
@@ -144,7 +153,7 @@ export async function appendConversationMessage(
     throw new Error('Conversation not found');
   }
 
-  return toCurrentConversationResponse(updatedConversation);
+  return toConversationResponse(updatedConversation);
 }
 
 export function toAgentHistory(messages: ConversationMessage[]): Array<{ role: 'user' | 'assistant'; content: string }> {

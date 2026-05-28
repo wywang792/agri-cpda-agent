@@ -7,6 +7,7 @@ import { users } from '../../db/schema.js';
 import { eq } from 'drizzle-orm';
 import {
   appendConversationMessage,
+  createConversation,
   getConversationForUser,
   getLatestOrderDraft,
   getOrCreateCurrentConversation,
@@ -32,6 +33,16 @@ chatRouter.get('/current', async (c) => {
     conversationId: conversation.id,
     messages: conversation.messages,
   });
+});
+
+chatRouter.post('/conversations', async (c) => {
+  const userId = c.get('userId');
+  const conversation = await createConversation(userId);
+
+  return c.json({
+    conversationId: conversation.id,
+    messages: conversation.messages,
+  }, 201);
 });
 
 chatRouter.post('/stream', async (c) => {

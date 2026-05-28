@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useSSE } from './useSSE';
-import { getCurrentConversation, type ConversationMessage } from '../services/chat';
+import { createConversation, getCurrentConversation, type ConversationMessage } from '../services/chat';
 
 export interface ChatMessage {
   id: string;
@@ -99,5 +99,14 @@ export function useChat() {
     }
   }, [conversationId, send]);
 
-  return { messages, sendMessage, streamingText, isStreaming, cancel };
+  const newConversation = useCallback(async () => {
+    cancel();
+    setStreamingText('');
+
+    const conversation = await createConversation();
+    setConversationId(conversation.conversationId);
+    setMessages([]);
+  }, [cancel]);
+
+  return { messages, sendMessage, streamingText, isStreaming, cancel, newConversation };
 }

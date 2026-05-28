@@ -15,3 +15,9 @@ export interface CurrentConversationResponse {
 export async function getCurrentConversation(): Promise<CurrentConversationResponse> {
   return apiRequest<CurrentConversationResponse>('/api/chat/current');
 }
+
+export async function createConversation(): Promise<CurrentConversationResponse> {
+  return apiRequest<CurrentConversationResponse>('/api/chat/conversations', {
+    method: 'POST',
+  });
+}
