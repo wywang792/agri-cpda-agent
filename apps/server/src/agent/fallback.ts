@@ -23,6 +23,7 @@ function hasActiveOrderContext(history: HistoryEntry[] = []): boolean {
 export function recognizeIntentByRules(message: string, history: HistoryEntry[] = []): AgentIntent {
   if (/确认|就这个|可以|同意|没问题/.test(message) && hasActiveOrderContext(history)) return 'confirm_order';
   if (/取消|撤销|不要了/.test(message)) return 'cancel';
+  if (/(新增|添加|增加|保存|维护|设置).*(地址|收货地址)|地址.*(新增|添加|增加|保存|维护|默认)|设为默认地址|默认收货地址/.test(message)) return 'manage_address';
   if (/推荐|买什么|买点啥|什么好/.test(message)) return 'recommend';
   if (/多少钱|价格|价钱|报价/.test(message)) return 'ask_price';
   if (/订单|送到|状态|昨天|今天|历史/.test(message) && /查|看|到没|有没有|查询/.test(message)) return 'query_order';
@@ -124,6 +125,40 @@ function cleanDeliveryAddress(value: string | undefined): string | null {
   return address || null;
 }
 
+function extractAddressManagementFields(message: string): Pick<ExtractedEntities, 'contactName' | 'deliveryAddress' | 'phone' | 'setDefaultAddress'> {
+  const phoneMatch = message.match(/1[3-9]\d{9}/);
+  const phone = phoneMatch?.[0] || null;
+  const setDefaultAddress = /默认|设为默认/.test(message);
+
+  if (!phone || phoneMatch?.index === undefined) {
+    return {
+      contactName: null,
+      deliveryAddress: null,
+      phone,
+      setDefaultAddress,
+    };
+  }
+
+  const beforePhone = message.slice(0, phoneMatch.index).trim();
+  const afterPhone = message.slice(phoneMatch.index + phone.length).trim();
+  const contactSegment = beforePhone.split(/[，,。；;\s]+/).filter(Boolean).pop() || '';
+  const contactName = contactSegment
+    .replace(/^(联系人|收货人|姓名|客户|采购商)[:：]?/, '')
+    .trim() || null;
+  const deliveryAddress = afterPhone
+    .replace(/^[，,。；;\s]+/, '')
+    .replace(/(设为默认|默认地址|默认收货地址|作为默认|设成默认).*$/, '')
+    .replace(/[，,。；;\s]+$/, '')
+    .trim() || null;
+
+  return {
+    contactName,
+    deliveryAddress,
+    phone,
+    setDefaultAddress,
+  };
+}
+
 export function extractEntitiesByRules(message: string, history: HistoryEntry[] = []): ExtractedEntities {
   const text = getConversationText(message, history);
   const items = findItems(text);
@@ -131,14 +166,17 @@ export function extractEntitiesByRules(message: string, history: HistoryEntry[] 
   const phoneMatch = text.match(/1[3-9]\d{9}/);
   const addressMatch = text.match(/(?:地址|送到|配送到|收货地址)?[:：\s]*([\u4e00-\u9fa5A-Za-z0-9]{2,}(?:市|区|县|路|街|楼|号|仓|市场|店|摊)[\u4e00-\u9fa5A-Za-z0-9]*)/);
   const buyerMatch = text.match(/(?:我是|联系人|客户|采购商)?\s*([\u4e00-\u9fa5]{2,4})\s*(?:1[3-9]\d{9})/);
+  const addressFields = extractAddressManagementFields(message);
 
   return {
     items,
     buyer: buyerMatch?.[1] || null,
     supplier: null,
-    deliveryAddress: cleanDeliveryAddress(addressMatch?.[1]),
+    deliveryAddress: addressFields.deliveryAddress || cleanDeliveryAddress(addressMatch?.[1]),
     timeRange: extractTimeRange(text),
-    phone: phoneMatch?.[0] || null,
+    phone: addressFields.phone || phoneMatch?.[0] || null,
+    contactName: addressFields.contactName,
+    setDefaultAddress: addressFields.setDefaultAddress,
   };
 }
 

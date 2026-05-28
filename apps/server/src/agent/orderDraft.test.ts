@@ -67,4 +67,15 @@ describe('fallback extraction rules', () => {
     expect(recognizeIntentByRules('查询供应商今天的订单')).toBe('query_order');
     expect(extractEntitiesByRules('查询供应商今天的订单').timeRange).toBe('今天');
   });
+
+  it('recognizes and extracts buyer address management requests', () => {
+    const message = '帮我新增一个地址，小王 18089333333 西安市钟楼，设为默认';
+    const entities = extractEntitiesByRules(message);
+
+    expect(recognizeIntentByRules(message)).toBe('manage_address');
+    expect(entities.contactName).toBe('小王');
+    expect(entities.phone).toBe('18089333333');
+    expect(entities.deliveryAddress).toBe('西安市钟楼');
+    expect(entities.setDefaultAddress).toBe(true);
+  });
 });

@@ -13,6 +13,7 @@ export const intentPrompt = ChatPromptTemplate.fromMessages([
 - confirm_order: 确认订单、同意下单、就这样
 - cancel: 取消或撤销操作
 - recommend: 请求推荐商品
+- manage_address: 新增、保存、维护收货地址，或设置默认收货地址
 - chat: 闲聊或其他问题
 
 如果最新消息是“确认”“就这个”“可以”等，并且历史中有待确认订单，请返回 confirm_order。
@@ -33,10 +34,13 @@ export const entityExtractionPrompt = ChatPromptTemplate.fromMessages([
   "buyer": "采购商或联系人，无法提取则为 null",
   "supplier": "供应商，无法提取则为 null",
   "deliveryAddress": "配送地址，无法提取则为 null",
-  "timeRange": "时间范围，如今天/昨天/明天中午12点，无法提取则为 null"
+  "timeRange": "时间范围，如今天/昨天/明天中午12点，无法提取则为 null",
+  "phone": "联系电话，无法提取则为 null",
+  "contactName": "地址联系人或收货人，无法提取则为 null",
+  "setDefaultAddress": true
 }}
 
-如果最新消息是在补充信息，请保留历史中已经明确的商品、数量、电话、地址和时间。`,
+如果最新消息是在补充信息，请保留历史中已经明确的商品、数量、电话、地址和时间。地址维护请求需要提取联系人、联系电话、收货地址以及是否设为默认。`,
   ],
   ['human', '历史对话：\n{history}\n\n最新消息：{message}'],
 ]);

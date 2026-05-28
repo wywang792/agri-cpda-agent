@@ -26,4 +26,6 @@ export interface ExtractedEntities {
   deliveryAddress: string | null;
   timeRange: string | null;
   phone?: string | null;
+  contactName?: string | null;
+  setDefaultAddress?: boolean;
 }

@@ -24,7 +24,7 @@ export async function recognizeIntent(state: AgentState): Promise<Partial<AgentS
     );
     const intent = result.content.toString().trim().toLowerCase() as AgentIntent;
     const validIntents: AgentIntent[] = [
-      'place_order', 'query_order', 'ask_price', 'confirm_order', 'cancel', 'recommend', 'chat'
+      'place_order', 'query_order', 'ask_price', 'confirm_order', 'cancel', 'recommend', 'manage_address', 'chat'
     ];
     const validated = validIntents.includes(intent) ? intent : recognizeIntentByRules(state.message, state.history);
     console.log(`[Agent] recognizeIntent:done -> ${validated}`);

@@ -7,6 +7,7 @@ export type AgentIntent =
   | 'confirm_order'
   | 'cancel'
   | 'recommend'
+  | 'manage_address'
   | 'chat';
 
 export interface AgentMessage {

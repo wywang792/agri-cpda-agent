@@ -8,6 +8,7 @@ import { extractEntities } from './entities.js';
 import { retrieveContext } from './retrieval.js';
 import { applyOrderFlow } from './orderDraft.js';
 import { generateResponse } from './response.js';
+import { manageAddressBook } from './addressBook.js';
 
 const AgentStateAnnotation = Annotation.Root({
   message: Annotation<string>,
@@ -29,7 +30,7 @@ const AgentStateAnnotation = Annotation.Root({
 
 function routeByIntent(state: typeof AgentStateAnnotation.State): string {
   const intent = state.intent;
-  if (intent === 'place_order' || intent === 'confirm_order' || intent === 'ask_price' || intent === 'recommend') {
+  if (intent === 'place_order' || intent === 'confirm_order' || intent === 'ask_price' || intent === 'recommend' || intent === 'manage_address') {
     return 'extractEntities';
   }
   if (intent === 'query_order') {
@@ -38,10 +39,18 @@ function routeByIntent(state: typeof AgentStateAnnotation.State): string {
   return 'generateResponse';
 }
 
+function routeAfterExtraction(state: typeof AgentStateAnnotation.State): string {
+  if (state.intent === 'manage_address') {
+    return 'manageAddressBook';
+  }
+  return 'retrieveContext';
+}
+
 export function buildAgentGraph() {
   const graph = new StateGraph(AgentStateAnnotation)
     .addNode('recognizeIntent', recognizeIntent)
     .addNode('extractEntities', extractEntities)
+    .addNode('manageAddressBook', manageAddressBook)
     .addNode('retrieveContext', retrieveContext)
     .addNode('applyOrderFlow', applyOrderFlow)
     .addNode('generateResponse', generateResponse)
@@ -51,7 +60,11 @@ export function buildAgentGraph() {
       retrieveContext: 'retrieveContext',
       generateResponse: 'generateResponse',
     })
-    .addEdge('extractEntities', 'retrieveContext')
+    .addConditionalEdges('extractEntities', routeAfterExtraction, {
+      manageAddressBook: 'manageAddressBook',
+      retrieveContext: 'retrieveContext',
+    })
+    .addEdge('manageAddressBook', END)
     .addEdge('retrieveContext', 'applyOrderFlow')
     .addEdge('applyOrderFlow', 'generateResponse')
     .addEdge('generateResponse', END);
