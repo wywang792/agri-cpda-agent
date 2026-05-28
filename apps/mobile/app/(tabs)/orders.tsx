@@ -1,5 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, SafeAreaView, ActivityIndicator } from 'react-native';
+import { useFocusEffect } from 'expo-router';
 import { listOrders, type OrderDto } from '../../src/services/orders';
 
 const filters = ['全部', '待确认', '进行中', '已完成'];
@@ -42,7 +43,7 @@ export default function OrdersScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
+  useFocusEffect(useCallback(() => {
     let mounted = true;
     setLoading(true);
     setError('');
@@ -64,7 +65,7 @@ export default function OrdersScreen() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, []));
 
   const filteredOrders = useMemo(
     () => orders.filter((order) => matchesFilter(order, active)),
