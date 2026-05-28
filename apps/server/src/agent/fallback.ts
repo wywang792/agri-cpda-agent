@@ -25,7 +25,7 @@ export function recognizeIntentByRules(message: string, history: HistoryEntry[] 
   if (/取消|撤销|不要了/.test(message)) return 'cancel';
   if (/(新增|添加|增加|保存|维护|设置).*(地址|收货地址)|地址.*(新增|添加|增加|保存|维护|默认)|设为默认地址|默认收货地址/.test(message)) return 'manage_address';
   if (/推荐|买什么|买点啥|什么好/.test(message)) return 'recommend';
-  if (/多少钱|价格|价钱|报价/.test(message)) return 'ask_price';
+  if (/多少钱|价格|价钱|报价|有哪些菜|有什么菜|菜品|商品列表|列出.*菜|列出.*商品/.test(message)) return 'ask_price';
   if (/订单|送到|状态|昨天|今天|历史/.test(message) && /查|看|到没|有没有|查询/.test(message)) return 'query_order';
   if (/下单|采购|购买|来\s*[一二两三四五六七八九十百千万\d]+|要\s*[一二两三四五六七八九十百千万\d]+|送\s*[一二两三四五六七八九十百千万\d]+|[一二两三四五六七八九十百千万\d]+\s*(斤|箱|袋)/.test(message)) return 'place_order';
   if (hasActiveOrderContext(history) && /电话|地址|送|明天|今天|中午|下午|上午|\d{11}/.test(message)) return 'place_order';

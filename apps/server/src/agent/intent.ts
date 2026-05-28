@@ -8,10 +8,15 @@ import { withTimeout } from './timeout.js';
 export async function recognizeIntent(state: AgentState): Promise<Partial<AgentState>> {
   console.log('[Agent] recognizeIntent:start');
 
+  const ruleIntent = recognizeIntentByRules(state.message, state.history);
+  if (ruleIntent !== 'chat') {
+    console.log(`[Agent] recognizeIntent:rules -> ${ruleIntent}`);
+    return { intent: ruleIntent };
+  }
+
   if (!isLLMConfigured()) {
-    const intent = recognizeIntentByRules(state.message, state.history);
-    console.log(`[Agent] recognizeIntent:fallback no api key -> ${intent}`);
-    return { intent };
+    console.log(`[Agent] recognizeIntent:fallback no api key -> ${ruleIntent}`);
+    return { intent: ruleIntent };
   }
 
   try {

@@ -8,7 +8,10 @@ function shouldUseDeterministicResponse(state: AgentState): boolean {
   return Boolean(
     state.createdOrder ||
     state.intent === 'place_order' ||
-    state.intent === 'confirm_order'
+    state.intent === 'confirm_order' ||
+    state.intent === 'ask_price' ||
+    state.intent === 'query_order' ||
+    state.intent === 'recommend'
   );
 }
 
@@ -39,7 +42,7 @@ export async function generateResponse(state: AgentState): Promise<Partial<Agent
   });
 
   if (shouldUseDeterministicResponse(state)) {
-    console.log('[Agent] generateResponse:deterministic order response');
+    console.log('[Agent] generateResponse:deterministic response');
     return { response: fallbackResponse() };
   }
 

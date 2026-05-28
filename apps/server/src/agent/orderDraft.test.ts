@@ -96,6 +96,11 @@ describe('fallback extraction rules', () => {
     expect(extractEntitiesByRules('查询供应商今天的订单').timeRange).toBe('今天');
   });
 
+  it('recognizes broad product and price questions as price lookup', () => {
+    expect(recognizeIntentByRules('今天有哪些菜')).toBe('ask_price');
+    expect(recognizeIntentByRules('今天价格怎么样')).toBe('ask_price');
+  });
+
   it('recognizes and extracts buyer address management requests', () => {
     const message = '帮我新增一个地址，小王 18089333333 西安市钟楼，设为默认';
     const entities = extractEntitiesByRules(message);

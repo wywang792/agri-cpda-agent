@@ -9,7 +9,7 @@ export const intentPrompt = ChatPromptTemplate.fromMessages([
 意图类别：
 - place_order: 下单、采购、购买商品，或补充下单所需信息
 - query_order: 查询订单状态或历史订单
-- ask_price: 询问商品价格
+- ask_price: 询问商品价格、菜品列表、商品列表、今天有哪些菜
 - confirm_order: 确认订单、同意下单、就这样
 - cancel: 取消或撤销操作
 - recommend: 请求推荐商品

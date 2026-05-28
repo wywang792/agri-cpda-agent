@@ -7,18 +7,30 @@ import { withTimeout } from '../agent/timeout.js';
 import { getLLMTimeoutMs } from '../llm/provider.js';
 import type { UserRole } from '@agent-xfd/shared';
 
+export function normalizeProductQuery(query: string): string {
+  const trimmed = query.trim();
+  if (!trimmed) return '';
+
+  if (/今天价格怎么样|今日价格|价格怎么样|有哪些菜|有什么菜|菜品|商品列表|列出.*菜|列出.*商品/.test(trimmed)) {
+    return '';
+  }
+
+  return trimmed;
+}
+
 export async function retrieveProducts(query: string, marketId: string, limit: number = 5) {
-  console.log(`[RAG] retrieveProducts:start query="${query}" marketId=${marketId}`);
+  const normalizedQuery = normalizeProductQuery(query);
+  console.log(`[RAG] retrieveProducts:start query="${normalizedQuery}" marketId=${marketId}`);
   let semanticResults: Array<{ id: string; name: string; category: string; similarity: number }> = [];
 
   const keywordResults = await db.select().from(products)
-    .where(and(eq(products.marketId, marketId), ilike(products.name, `%${query}%`)))
+    .where(and(eq(products.marketId, marketId), ilike(products.name, `%${normalizedQuery}%`)))
     .limit(limit);
 
-  if (process.env.ENABLE_SEMANTIC_SEARCH === 'true') {
+  if (normalizedQuery && process.env.ENABLE_SEMANTIC_SEARCH === 'true') {
     try {
       const queryEmbedding = await withTimeout(
-        generateEmbedding(query),
+        generateEmbedding(normalizedQuery),
         getLLMTimeoutMs(),
         'product embedding'
       );

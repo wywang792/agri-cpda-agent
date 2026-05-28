@@ -52,6 +52,23 @@ describe('generateResponse', () => {
     expect(result.response).toContain('商品');
     expect(result.response).not.toContain('订单已创建成功');
   });
+
+  it('uses deterministic responses for price questions instead of mixing in chat history', async () => {
+    providerMocks.getLLM.mockClear();
+
+    const result = await generateResponse(baseState({
+      intent: 'ask_price',
+      message: '今天价格怎么样',
+      context: '相关商品：\n- 土豆 (根茎类) 参考价: ￥2.5/斤',
+      history: [
+        { role: 'assistant', content: '您今天有两个待处理订单。' },
+      ],
+    }));
+
+    expect(providerMocks.getLLM).not.toHaveBeenCalled();
+    expect(result.response).toContain('土豆');
+    expect(result.response).not.toContain('待处理订单');
+  });
 });
 
 describe('buildResponseContext', () => {
