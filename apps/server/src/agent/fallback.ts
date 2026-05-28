@@ -222,8 +222,15 @@ export function generateFallbackResponse(params: {
         return `- ${item.productName}：${item.quantity}${item.unit}${price}`;
       });
       const total = orderDraft.totalPrice ? `\n总价约：￥${orderDraft.totalPrice.toFixed(2)}` : '';
+      const deliveryLines = [
+        orderDraft.deliveryContactName ? `联系人：${orderDraft.deliveryContactName}` : '',
+        orderDraft.deliveryContactPhone ? `联系电话：${orderDraft.deliveryContactPhone}` : '',
+        orderDraft.deliveryAddress ? `配送地址：${orderDraft.deliveryAddress}` : '',
+        orderDraft.deliveryTimeText ? `配送时间：${orderDraft.deliveryTimeText}` : '',
+      ].filter(Boolean);
+      const delivery = deliveryLines.length > 0 ? `\n\n配送信息：\n${deliveryLines.join('\n')}` : '';
       const missing = missingFields.length > 0 ? `\n还需要补充：${missingFields.join('、')}` : '\n请确认以上信息是否下单。';
-      return `好的，我先整理当前订单：\n${lines.join('\n')}${total}${missing}`;
+      return `好的，我先整理当前订单：\n${lines.join('\n')}${total}${delivery}${missing}`;
     }
     return context
       ? `我先帮你整理一下下单信息：\n${context}\n请确认采购方、供应商和配送地址。`

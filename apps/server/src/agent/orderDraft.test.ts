@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { extractEntitiesByRules, recognizeIntentByRules } from './fallback.js';
-import { mergeOrderDraft, validateOrderDraft } from './orderDraft.js';
+import { applyDefaultAddressToDraft, mergeOrderDraft, validateOrderDraft } from './orderDraft.js';
 
 describe('order draft helpers', () => {
   it('keeps existing items when the user later adds delivery details', () => {
@@ -34,11 +34,39 @@ describe('order draft helpers', () => {
     expect(validateOrderDraft({
       buyerId: 'buyer-1',
       supplierId: 'supplier-1',
+      deliveryContactName: '小王',
+      deliveryContactPhone: '18089333333',
       deliveryAddress: '西安市钟楼',
       items: [{ productName: '土豆', productId: 'product-1', quantity: 10, unit: '斤' }],
     })).toEqual([]);
 
-    expect(validateOrderDraft({ items: [] })).toEqual(['商品', '采购方', '供应商', '配送地址']);
+    expect(validateOrderDraft({ items: [] })).toEqual(['商品', '采购方', '供应商', '联系人', '联系电话', '配送地址']);
+  });
+
+  it('fills missing delivery fields from the buyer default address without overwriting explicit values', () => {
+    const defaultAddress = {
+      contactName: '小王',
+      contactPhone: '18089333333',
+      address: '西安市钟楼',
+    };
+
+    expect(applyDefaultAddressToDraft({ items: [], buyerId: 'buyer-1' }, defaultAddress)).toMatchObject({
+      deliveryContactName: '小王',
+      deliveryContactPhone: '18089333333',
+      deliveryAddress: '西安市钟楼',
+    });
+
+    expect(applyDefaultAddressToDraft({
+      items: [],
+      buyerId: 'buyer-1',
+      deliveryContactName: '老李',
+      deliveryContactPhone: '13900001111',
+      deliveryAddress: '城东仓库',
+    }, defaultAddress)).toMatchObject({
+      deliveryContactName: '老李',
+      deliveryContactPhone: '13900001111',
+      deliveryAddress: '城东仓库',
+    });
   });
 });
 

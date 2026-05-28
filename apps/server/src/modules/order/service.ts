@@ -43,6 +43,8 @@ export async function createOrder(data: CreateOrderRequest, creatorId: string, c
     buyerId: data.buyerId, buyerName: buyer.username,
     supplierId: data.supplierId, supplierName: supplier.username,
     totalPrice: totalPrice.toFixed(2), status: 'pending',
+    deliveryContactName: data.deliveryContactName,
+    deliveryContactPhone: data.deliveryContactPhone,
     deliveryAddress: data.deliveryAddress,
     deliveryTimeText: data.deliveryTimeText,
     deliveryStartAt: data.deliveryStartAt,

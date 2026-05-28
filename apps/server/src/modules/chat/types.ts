@@ -12,6 +12,8 @@ export interface OrderDraft {
   buyerId?: string;
   buyerName?: string;
   buyerPhone?: string;
+  deliveryContactName?: string;
+  deliveryContactPhone?: string;
   supplierId?: string;
   supplierName?: string;
   deliveryAddress?: string;

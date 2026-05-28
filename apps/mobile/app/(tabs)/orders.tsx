@@ -100,6 +100,11 @@ export default function OrdersScreen() {
                 </View>
               </View>
               <Text style={styles.items}>{itemSummary || '暂无商品明细'}</Text>
+              {(item.deliveryContactName || item.deliveryContactPhone || item.deliveryAddress) && (
+                <Text style={styles.deliveryText}>
+                  {[item.deliveryContactName, item.deliveryContactPhone, item.deliveryAddress].filter(Boolean).join(' · ')}
+                </Text>
+              )}
               <View style={styles.timeRow}>
                 <Text style={styles.timeText}>配送：{formatDeliveryTime(item)}</Text>
                 <Text style={styles.timeText}>创建：{formatCreatedAt(item.createdAt)}</Text>
@@ -134,6 +139,7 @@ const styles = StyleSheet.create({
   tag: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 10, borderWidth: 1 },
   tagText: { fontSize: 11, fontWeight: '600' },
   items: { color: '#666', fontSize: 12, marginTop: 8 },
+  deliveryText: { color: '#555', fontSize: 12, marginTop: 6, lineHeight: 18 },
   timeRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 12, marginTop: 8 },
   timeText: { flex: 1, color: '#777', fontSize: 11 },
   cardFooter: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 8, gap: 12 },

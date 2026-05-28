@@ -15,6 +15,9 @@ export interface OrderDto {
   supplierName: string;
   totalPrice: string;
   status: string;
+  deliveryContactName?: string | null;
+  deliveryContactPhone?: string | null;
+  deliveryAddress?: string | null;
   deliveryTimeText?: string | null;
   deliveryStartAt?: string | null;
   deliveryEndAt?: string | null;

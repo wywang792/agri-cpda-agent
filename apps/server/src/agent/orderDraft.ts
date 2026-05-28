@@ -6,9 +6,15 @@ import { createOrder } from '../modules/order/service.js';
 import type { OrderDraft, OrderDraftItem } from '../modules/chat/types.js';
 import type { AgentState, ExtractedEntities } from './types.js';
 import { normalizeDeliveryTime } from './deliveryTime.js';
+import { getDefaultBuyerAddress } from '../modules/buyerAddress/service.js';
 
 type UserRow = typeof users.$inferSelect;
 type ProductRow = typeof products.$inferSelect;
+type DefaultBuyerAddress = {
+  contactName: string;
+  contactPhone: string;
+  address: string;
+} | null | undefined;
 
 function mergeItems(existing: OrderDraftItem[], incoming: ExtractedEntities['items']): OrderDraftItem[] {
   if (incoming.length === 0) {
@@ -55,7 +61,12 @@ export function mergeOrderDraft(
   draft.items = mergeItems(draft.items, entities.items || []);
   if (entities.buyer) draft.buyerName = entities.buyer;
   if (entities.supplier) draft.supplierName = entities.supplier;
-  if (entities.phone) draft.buyerPhone = entities.phone;
+  if (entities.contactName) draft.deliveryContactName = entities.contactName;
+  if (entities.buyer && !draft.deliveryContactName) draft.deliveryContactName = entities.buyer;
+  if (entities.phone) {
+    draft.buyerPhone = entities.phone;
+    draft.deliveryContactPhone = entities.phone;
+  }
   if (entities.deliveryAddress) draft.deliveryAddress = entities.deliveryAddress;
   if (entities.timeRange) {
     const deliveryTime = normalizeDeliveryTime(entities.timeRange);
@@ -69,6 +80,19 @@ export function mergeOrderDraft(
   return draft;
 }
 
+export function applyDefaultAddressToDraft(draft: OrderDraft, defaultAddress: DefaultBuyerAddress): OrderDraft {
+  if (!defaultAddress) {
+    return draft;
+  }
+
+  return {
+    ...draft,
+    deliveryContactName: draft.deliveryContactName || defaultAddress.contactName,
+    deliveryContactPhone: draft.deliveryContactPhone || defaultAddress.contactPhone,
+    deliveryAddress: draft.deliveryAddress || defaultAddress.address,
+  };
+}
+
 export function validateOrderDraft(draft: OrderDraft): string[] {
   const missing: string[] = [];
 
@@ -77,6 +101,8 @@ export function validateOrderDraft(draft: OrderDraft): string[] {
   }
   if (!draft.buyerId) missing.push('采购方');
   if (!draft.supplierId) missing.push('供应商');
+  if (!draft.deliveryContactName) missing.push('联系人');
+  if (!draft.deliveryContactPhone) missing.push('联系电话');
   if (!draft.deliveryAddress) missing.push('配送地址');
 
   return missing;
@@ -217,6 +243,11 @@ async function resolveOrderDraft(draft: OrderDraft, state: AgentState): Promise<
     };
   }
 
+  if (resolvedDraft.buyerId && (!resolvedDraft.deliveryContactName || !resolvedDraft.deliveryContactPhone || !resolvedDraft.deliveryAddress)) {
+    const defaultAddress = await getDefaultBuyerAddress(resolvedDraft.buyerId);
+    resolvedDraft = applyDefaultAddressToDraft(resolvedDraft, defaultAddress);
+  }
+
   return resolveItemPrices(resolvedDraft);
 }
 
@@ -225,6 +256,8 @@ function normalizeCreatedOrder(order: Awaited<ReturnType<typeof createOrder>>): 
     ...order,
     totalPrice: Number(order.totalPrice),
     deliveryAddress: order.deliveryAddress || '',
+    deliveryContactName: order.deliveryContactName || undefined,
+    deliveryContactPhone: order.deliveryContactPhone || undefined,
     deliveryTimeText: order.deliveryTimeText || undefined,
     deliveryStartAt: order.deliveryStartAt || undefined,
     deliveryEndAt: order.deliveryEndAt || undefined,
@@ -256,6 +289,8 @@ export async function applyOrderFlow(state: AgentState): Promise<Partial<AgentSt
       buyerId: orderDraft.buyerId!,
       supplierId: orderDraft.supplierId!,
       deliveryAddress: orderDraft.deliveryAddress!,
+      deliveryContactName: orderDraft.deliveryContactName,
+      deliveryContactPhone: orderDraft.deliveryContactPhone,
       deliveryTimeText: orderDraft.deliveryTimeText,
       deliveryStartAt: orderDraft.deliveryStartAt,
       deliveryEndAt: orderDraft.deliveryEndAt,

@@ -30,6 +30,8 @@ export interface Order {
   items: OrderItem[];
   totalPrice: number;
   status: OrderStatus;
+  deliveryContactName?: string;
+  deliveryContactPhone?: string;
   deliveryAddress: string;
   deliveryTimeText?: string;
   deliveryStartAt?: Date;
@@ -47,6 +49,8 @@ export interface CreateOrderRequest {
     productId: string;
     quantity: number;
   }[];
+  deliveryContactName?: string;
+  deliveryContactPhone?: string;
   deliveryAddress: string;
   deliveryTimeText?: string;
   deliveryStartAt?: Date;

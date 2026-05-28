@@ -62,6 +62,8 @@ export const orders = pgTable('orders', {
   supplierName: varchar('supplier_name', { length: 255 }).notNull(),
   totalPrice: decimal('total_price', { precision: 12, scale: 2 }).notNull(),
   status: orderStatusEnum('status').notNull().default('pending'),
+  deliveryContactName: varchar('delivery_contact_name', { length: 255 }),
+  deliveryContactPhone: varchar('delivery_contact_phone', { length: 50 }),
   deliveryAddress: text('delivery_address'),
   deliveryTimeText: text('delivery_time'),
   deliveryStartAt: timestamp('delivery_start_at'),
